@@ -32,8 +32,8 @@ export default function IntroductionPage() {
     setFieldErrors({});
     try {
       await saveNow();
+      await fetch("/api/questionnaire/introduction/complete", { method: "POST" });
     } catch {
-      // saveError state is already set by the hook — don't navigate
       return;
     }
     completeStep("introduction");
@@ -80,23 +80,23 @@ export default function IntroductionPage() {
       {/* Process Overview Banner */}
       <div className="rounded-[16px] bg-gradient-to-br from-[#FCE4EC] via-[#F3E5F5] to-[#EDE7F6] p-6">
         <p className="text-sm font-semibold text-navy mb-4">
-          Here&apos;s what to expect for this process:
+          Here&apos;s what to expect:
         </p>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl mb-1">📋</div>
-            <p className="text-sm font-medium text-navy">Fill out</p>
+            <p className="text-sm font-medium text-navy">Complete the</p>
             <p className="text-xs text-text-secondary">questionnaire</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl mb-1">👤</div>
-            <p className="text-sm font-medium text-navy">Connect with</p>
-            <p className="text-xs text-text-secondary">attorney</p>
+            <div className="text-2xl mb-1">🤝</div>
+            <p className="text-sm font-medium text-navy">Collaborate</p>
+            <p className="text-xs text-text-secondary">with your partner</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl mb-1">✅</div>
-            <p className="text-sm font-medium text-navy">E-sign &</p>
-            <p className="text-xs text-text-secondary">notarize</p>
+            <div className="text-2xl mb-1">📄</div>
+            <p className="text-sm font-medium text-navy">Generate your</p>
+            <p className="text-xs text-text-secondary">prenup</p>
           </div>
         </div>
       </div>

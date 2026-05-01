@@ -5,9 +5,7 @@ import Card from "@/components/ui/Card";
 import {
   ChevronDown,
   ChevronUp,
-  MessageCircle,
   Mail,
-  BookOpen,
   HelpCircle,
 } from "lucide-react";
 
@@ -61,18 +59,9 @@ export default function HelpPage() {
         </p>
       </div>
 
-      {/* Quick links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="text-center p-6 hover:shadow-card-hover transition-shadow cursor-pointer">
-          <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center mx-auto mb-3">
-            <MessageCircle className="w-6 h-6 text-teal" />
-          </div>
-          <h3 className="text-sm font-semibold text-navy">Live Chat</h3>
-          <p className="text-xs text-text-secondary mt-1">
-            Chat with our AI assistant for instant help
-          </p>
-        </Card>
-        <Card className="text-center p-6 hover:shadow-card-hover transition-shadow cursor-pointer">
+      {/* Contact */}
+      <a href="mailto:support@ourprenup.com" className="block">
+        <Card className="text-center p-6 hover:shadow-card-hover transition-shadow max-w-sm">
           <div className="w-12 h-12 rounded-full bg-purple/10 flex items-center justify-center mx-auto mb-3">
             <Mail className="w-6 h-6 text-purple" />
           </div>
@@ -81,16 +70,7 @@ export default function HelpPage() {
             support@ourprenup.com
           </p>
         </Card>
-        <Card className="text-center p-6 hover:shadow-card-hover transition-shadow cursor-pointer">
-          <div className="w-12 h-12 rounded-full bg-pink/10 flex items-center justify-center mx-auto mb-3">
-            <BookOpen className="w-6 h-6 text-pink" />
-          </div>
-          <h3 className="text-sm font-semibold text-navy">Learning Center</h3>
-          <p className="text-xs text-text-secondary mt-1">
-            Articles and guides about prenups
-          </p>
-        </Card>
-      </div>
+      </a>
 
       {/* FAQ */}
       <div>

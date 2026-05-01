@@ -81,6 +81,20 @@ export default function AttorneyPage() {
         </p>
       </div>
 
+      {/* Coming Soon Notice */}
+      <div className="rounded-[12px] bg-teal/10 border border-teal/20 p-5">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-teal mt-0.5 shrink-0" />
+          <div>
+            <h3 className="font-bold text-navy text-sm">Coming Soon</h3>
+            <p className="text-sm text-navy/80 mt-1">
+              Attorney review is not yet available through our platform.
+              We recommend consulting a family law attorney in your state for independent review of your prenuptial agreement.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Why Get Attorney Review */}
       <Card>
         <div className="flex items-start gap-3">
@@ -121,8 +135,8 @@ export default function AttorneyPage() {
                 </li>
               ))}
             </ul>
-            <Button variant="secondary" className="w-full">
-              Select
+            <Button variant="secondary" className="w-full" disabled>
+              Coming Soon
             </Button>
           </div>
         </Card>
@@ -150,8 +164,8 @@ export default function AttorneyPage() {
                 </li>
               ))}
             </ul>
-            <Button variant="primary" className="w-full">
-              Select
+            <Button variant="primary" className="w-full" disabled>
+              Coming Soon
             </Button>
           </div>
         </Card>
@@ -191,8 +205,8 @@ export default function AttorneyPage() {
             Connect with a licensed attorney for independent review of your
             prenuptial agreement.
           </p>
-          <Button variant="primary" size="lg" className="mt-4">
-            Get Started
+          <Button variant="primary" size="lg" className="mt-4" disabled>
+            Coming Soon
           </Button>
         </div>
       </Card>

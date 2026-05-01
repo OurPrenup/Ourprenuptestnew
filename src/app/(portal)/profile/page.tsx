@@ -1,24 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import { useUserSafe } from "@/lib/hooks/useClerkSafe";
 import {
   User,
-  Users,
   Calendar,
-  KeyRound,
-  Download,
-  Trash2,
+  Loader2,
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const [name, setName] = useState("Nick");
-  const [email, setEmail] = useState("nick@example.com");
-  const [phone, setPhone] = useState("");
-  const [partnerName, setPartnerName] = useState("");
-  const [partnerEmail, setPartnerEmail] = useState("");
+  const { user, isLoaded } = useUserSafe();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 animate-spin text-navy/40" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -28,7 +27,7 @@ export default function ProfilePage() {
           Your Account
         </h1>
         <p className="text-text-secondary mt-2">
-          Manage your profile and account settings.
+          View your profile information.
         </p>
       </div>
 
@@ -43,68 +42,25 @@ export default function ProfilePage() {
           </h2>
         </div>
         <div className="space-y-4 max-w-lg">
-          <Input
-            id="fullName"
-            label="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            id="email"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            id="phone"
-            label="Phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            helperText="Optional"
-          />
-          <Button variant="primary" size="sm">
-            Save Changes
-          </Button>
-        </div>
-      </Card>
-
-      {/* Partner Info */}
-      <Card>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-pink/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-pink" />
+          <div>
+            <label className="block text-sm font-medium text-navy/70 mb-1">Name</label>
+            <p className="text-base text-navy-dark">{user?.fullName || "Not set"}</p>
           </div>
-          <h2 className="text-lg font-semibold text-navy">
-            Partner Information
-          </h2>
-        </div>
-        <div className="space-y-4 max-w-lg">
-          <Input
-            id="partnerName"
-            label="Partner Name"
-            value={partnerName}
-            onChange={(e) => setPartnerName(e.target.value)}
-            placeholder="Enter your partner&apos;s name"
-          />
-          <Input
-            id="partnerEmail"
-            label="Partner Email"
-            type="email"
-            value={partnerEmail}
-            onChange={(e) => setPartnerEmail(e.target.value)}
-            placeholder="Enter your partner&apos;s email"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-navy font-medium">
-              Invite Status:
-            </span>
-            <span className="text-xs font-bold text-warning bg-warning/10 px-2.5 py-1 rounded-full uppercase">
-              Pending
-            </span>
+          <div>
+            <label className="block text-sm font-medium text-navy/70 mb-1">Email</label>
+            <p className="text-base text-navy-dark">{user?.primaryEmailAddress?.emailAddress || "Not set"}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-navy/70 mb-1">Account created</label>
+            <p className="text-base text-navy-dark">
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "Unknown"}
+            </p>
           </div>
         </div>
       </Card>
@@ -125,36 +81,26 @@ export default function ProfilePage() {
             until your wedding!
           </p>
           <p className="text-xs text-text-secondary mt-1">
-            Set your wedding date to see the countdown.
+            Set your wedding date in the questionnaire to see the countdown.
           </p>
         </div>
       </Card>
 
-      {/* Account Actions */}
+      {/* Account management link */}
       <Card>
-        <h2 className="text-lg font-semibold text-navy mb-4">
-          Account Actions
+        <h2 className="text-lg font-semibold text-navy mb-2">
+          Account Settings
         </h2>
-        <div className="space-y-3">
-          <button className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-bg transition-colors text-left">
-            <KeyRound className="w-4 h-4 text-navy" />
-            <span className="text-sm font-medium text-navy">
-              Change Password
-            </span>
-          </button>
-          <button className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-bg transition-colors text-left">
-            <Download className="w-4 h-4 text-navy" />
-            <span className="text-sm font-medium text-navy">
-              Download My Data
-            </span>
-          </button>
-          <button className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-bg transition-colors text-left">
-            <Trash2 className="w-4 h-4 text-coral" />
-            <span className="text-sm font-medium text-coral">
-              Delete Account
-            </span>
-          </button>
-        </div>
+        <p className="text-sm text-text-secondary mb-4">
+          To change your password, update your email, or manage your account,
+          use the account management portal.
+        </p>
+        <a
+          href="/user"
+          className="inline-flex items-center gap-2 text-sm font-medium text-teal hover:underline"
+        >
+          Manage account settings →
+        </a>
       </Card>
     </div>
   );

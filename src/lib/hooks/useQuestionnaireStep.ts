@@ -130,6 +130,10 @@ export function useQuestionnaireStep({
   /** Manual save that throws on failure (use in handleNext) */
   const saveNow = useCallback(() => save({ rethrow: true }), [save]);
 
+  // Keep a stable ref to save so the unmount effect always calls the latest version
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
   // Debounced auto-save on answer changes
   useEffect(() => {
     if (!hasLoadedRef.current) return;
@@ -145,11 +149,20 @@ export function useQuestionnaireStep({
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
-        // Flush the pending save immediately so data isn't lost on navigation
-        save();
       }
     };
   }, [answers, save, saveDelay]);
+
+  // Flush any pending save on actual unmount only
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        saveRef.current();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateAnswer = useCallback((id: string, value: string | string[]) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));

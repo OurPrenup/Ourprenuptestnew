@@ -1,41 +1,166 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  ClipboardList,
-  FileText,
-  Stamp,
-  Globe,
-  Users,
-  DollarSign,
-  PenTool,
-  Scale,
-  RefreshCw,
-  ShieldCheck,
-  Lock,
-  CheckCircle2,
+  ArrowRight,
   ChevronDown,
   Menu,
   X,
-  ArrowRight,
+  Globe,
+  Lock,
+  Shield,
+  Check,
   Star,
-  BadgeCheck,
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/*  NAVIGATION                                                         */
-/* ------------------------------------------------------------------ */
+/* ── Data ──────────────────────────────────────────────────────────── */
+
+const NAV_STATES = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
+  "Delaware","DC","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana",
+  "Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts",
+  "Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
+  "New Hampshire","New Jersey","New Mexico","New York","North Carolina",
+  "North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island",
+  "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia",
+  "Washington","West Virginia","Wisconsin","Wyoming",
+];
+
+const COUPLES = [
+  { names: "Sophie & James", state: "California", abbr: "CA", bg: "#8B6F5E" },
+  { names: "Aaliyah & Marcus", state: "Texas", abbr: "TX", bg: "#5E7A6F" },
+  { names: "Priya & Daniel", state: "New York", abbr: "NY", bg: "#6B5E7A" },
+  { names: "Emma & Noah", state: "Florida", abbr: "FL", bg: "#7A6B5E" },
+  { names: "Yuki & Brandon", state: "Washington", abbr: "WA", bg: "#5E6B7A" },
+  { names: "Fatima & Carlos", state: "Illinois", abbr: "IL", bg: "#7A5E6B" },
+  { names: "Grace & Liam", state: "Colorado", abbr: "CO", bg: "#6B7A5E" },
+  { names: "Olivia & Ethan", state: "Georgia", abbr: "GA", bg: "#7A7A5E" },
+  { names: "Chloe & Mateo", state: "Arizona", abbr: "AZ", bg: "#5E7A7A" },
+  { names: "Nia & Tyler", state: "Massachusetts", abbr: "MA", bg: "#7A5E5E" },
+  { names: "Sara & Michael", state: "Pennsylvania", abbr: "PA", bg: "#6F5E8B" },
+  { names: "Zoe & Chris", state: "Ohio", abbr: "OH", bg: "#5E8B6F" },
+  { names: "Mia & Jordan", state: "Michigan", abbr: "MI", bg: "#8B5E6F" },
+  { names: "Leila & Sam", state: "North Carolina", abbr: "NC", bg: "#6F8B5E" },
+  { names: "Anna & Ryan", state: "Virginia", abbr: "VA", bg: "#5E6F8B" },
+  { names: "Jade & Alex", state: "Nevada", abbr: "NV", bg: "#8B8B5E" },
+  { names: "Maya & Kevin", state: "Oregon", abbr: "OR", bg: "#5E8B8B" },
+  { names: "Isabel & Drew", state: "Tennessee", abbr: "TN", bg: "#8B5E8B" },
+  { names: "Claire & Jake", state: "Minnesota", abbr: "MN", bg: "#6B6B6B" },
+  { names: "Aisha & Ben", state: "Maryland", abbr: "MD", bg: "#8B7A5E" },
+];
+
+const HOW_IT_WORKS_STEPS = [
+  { n: "01", title: "Answer questions together", body: "Both partners complete their own questionnaire — covering assets, debts, property, spousal support, and more. Work at your own pace from anywhere." },
+  { n: "02", title: "We generate your agreement", body: "Our 50-state legal engine produces a customized prenup tailored to your state's laws, your assets, and your decisions." },
+  { n: "03", title: "Sign & notarize in minutes", body: "Review, e-sign, and notarize your completed agreement online — fully legally valid. No printing, no office visits." },
+];
+
+const PRICING_PLANS = [
+  {
+    name: "Prenup Agreement", price: "$599", per: "per couple", featured: true, badge: "Most Popular",
+    desc: "Everything you need to create a legally binding, state-specific prenup — together.",
+    items: ["Guided questionnaire for both partners", "State-specific document generation", "Financial disclosure worksheets", "Unlimited revisions before signing", "Downloadable PDF + e-signature"],
+    href: "/sign-up",
+  },
+  {
+    name: "Attorney Review", price: "$699", per: "per partner", featured: false, badge: null,
+    desc: "Have a licensed family law attorney review your completed agreement.",
+    items: ["Licensed attorney in your state", "Written summary of findings", "Strengthening enforceability tips", "One round of follow-up Q&A", "Completed in 3–5 business days"],
+    href: null,
+  },
+  {
+    name: "Online Notarization", price: "$50", per: "per couple", featured: false, badge: null,
+    desc: "Get your signed agreement notarized online with a certified remote notary.",
+    items: ["Live video session with notary", "Certified remote online notary", "Digital seal and certificate", "Under 30 minutes", "Valid in all 50 states"],
+    href: null,
+  },
+];
+
+const ALL_STATE_NAMES = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
+  "Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
+  "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan",
+  "Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
+  "New Hampshire","New Jersey","New Mexico","New York","North Carolina",
+  "North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island",
+  "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia",
+  "Washington","West Virginia","Wisconsin","Wyoming","DC",
+];
+
+const FAQS = [
+  { q: "Is an online prenup legally binding?", a: "Yes. OurPrenup agreements are legally binding contracts, provided they meet your state's requirements — which our platform is specifically designed to satisfy. Requirements typically include full financial disclosure, voluntary signing, and in some states, notarization." },
+  { q: "Do we need separate attorneys?", a: "It depends on your state. Some states recommend (or effectively require) that each partner consult independent legal counsel. Our platform flags this for your state, and we offer optional attorney review for peace of mind." },
+  { q: "How long does the process take?", a: "Most couples finish in 1–2 hours of active work. You can save progress and return anytime. Once you finalize your answers, your agreement is generated instantly." },
+  { q: "Can we make changes after generating the agreement?", a: "Absolutely — unlimited revisions before you sign. After e-signing and notarizing, changes would require a formal amendment." },
+  { q: "What if we disagree on something?", a: "Disagreement is normal. Both partners can see each other's responses, flag items for discussion, and work through differences together. Our collaboration tools are built for this." },
+  { q: "What does $599 include?", a: "Everything for both partners: the guided questionnaire, financial disclosure tools, state-specific document generation, unlimited revisions, e-signatures for both partners, and a downloadable PDF. Notarization and attorney review are optional add-ons." },
+];
+
+const TESTIMONIALS = [
+  { quote: "OurPrenup made the whole process feel collaborative, not adversarial. We both felt heard.", name: "Jordan & Casey", state: "California" },
+  { quote: "The document was thorough and the process was so much simpler than we expected.", name: "Marcus T.", state: "Texas" },
+  { quote: "As someone who's been through a divorce, I can tell you: do this. So much easier than anything I went through before.", name: "Priya S.", state: "New York" },
+  { quote: "Took us 90 minutes on a Sunday afternoon. Signed, notarized, done.", name: "Alex & Sam", state: "Florida" },
+  { quote: "The questionnaire actually helped us have important conversations we hadn't had yet.", name: "Diane W.", state: "Colorado" },
+];
+
+/* ── Hooks ─────────────────────────────────────────────────────────── */
+
+function useCounter(target: number, duration = 1500) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    let cancelled = false;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        obs.disconnect();
+        let startTime: number | null = null;
+        const step = (ts: number) => {
+          if (cancelled) return;
+          if (!startTime) startTime = ts;
+          const progress = Math.min((ts - startTime) / duration, 1);
+          setCount(Math.floor(progress * target));
+          if (progress < 1) rafId = requestAnimationFrame(step);
+          else setCount(target);
+        };
+        rafId = requestAnimationFrame(step);
+      },
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => {
+      cancelled = true;
+      obs.disconnect();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [target, duration]);
+
+  return { count, ref };
+}
+
+/* ── Navbar ─────────────────────────────────────────────────────────── */
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [topBarVisible, setTopBarVisible] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const fn = () => {
+      setScrolled(window.scrollY > 40);
+      setTopBarVisible(window.scrollY < 60);
+    };
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  const dark = !scrolled;
 
   const scrollTo = (id: string) => {
     setMobileOpen(false);
@@ -43,105 +168,101 @@ function Navbar() {
   };
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-card border-b border-border"
-          : "bg-white/80 backdrop-blur-sm"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-18">
+    <nav className="fixed top-0 left-0 right-0 z-[100]" style={{
+      background: scrolled ? "rgba(250,250,247,0.97)" : "transparent",
+      backdropFilter: scrolled ? "blur(14px)" : "none",
+      borderBottom: scrolled ? "1px solid var(--color-border)" : "none",
+      boxShadow: scrolled ? "0 1px 16px rgba(0,0,0,0.07)" : "none",
+      transition: "background 0.3s, box-shadow 0.3s",
+    }}>
+      {/* Top promo bar */}
+      {topBarVisible && (
+        <div className="flex items-center justify-center h-9 text-[13px]"
+          style={{ background: "#071443", color: "rgba(255,255,255,0.85)" }}>
+          Prenups made simple.
+        </div>
+      )}
+
+      {/* Main nav */}
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="flex items-center justify-between h-[60px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-2xl font-bold text-navy font-[family-name:var(--font-heading)]">
-              OurPrenup
-            </span>
+          <Link href="/" className="text-[22px] font-bold font-[family-name:var(--font-heading)]"
+            style={{ color: dark ? "#fff" : "#071443" }}>
+            OurPrenup
           </Link>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <button
-              onClick={() => scrollTo("how-it-works")}
-              className="text-sm font-medium text-navy-dark/70 hover:text-navy transition-colors cursor-pointer"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollTo("pricing")}
-              className="text-sm font-medium text-navy-dark/70 hover:text-navy transition-colors cursor-pointer"
-            >
-              Pricing
-            </button>
-            <button
-              onClick={() => scrollTo("faq")}
-              className="text-sm font-medium text-navy-dark/70 hover:text-navy transition-colors cursor-pointer"
-            >
-              FAQ
-            </button>
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-1">
+            {[
+              { label: "How It Works", action: () => scrollTo("how-it-works") },
+              { label: "Pricing", action: () => scrollTo("pricing") },
+              { label: "FAQ", action: () => scrollTo("faq") },
+            ].map(({ label, action }) => (
+              <button key={label} onClick={action}
+                className="text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors hover:bg-[rgba(15,33,98,0.05)]"
+                style={{ color: dark ? "#fff" : "#071443" }}>
+                {label}
+              </button>
+            ))}
+
+            {/* States dropdown */}
+            <div className="relative group">
+              <button className="text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors hover:bg-[rgba(15,33,98,0.05)] flex items-center gap-1"
+                style={{ color: dark ? "#fff" : "#071443" }}>
+                States
+                <ChevronDown size={12} className="transition-transform group-hover:rotate-180" />
+              </button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white border border-[#e8e8f0] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.14)] p-5 w-[580px] grid grid-cols-4 gap-0.5 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-y-2 group-hover:translate-y-0 z-[200]">
+                <div className="col-span-4 text-[11px] font-bold tracking-wider uppercase text-[#5a5a72] px-2.5 pb-2.5 mb-1.5 border-b border-[#e8e8f0]">
+                  All 50 States + DC
+                </div>
+                {NAV_STATES.map((s) => (
+                  <span key={s} className="text-[13px] text-[#071443] px-2.5 py-1.5 rounded-lg hover:bg-[#fce8f1] hover:text-[#E84C88] transition-colors cursor-default truncate">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Desktop CTAs */}
+          {/* CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/sign-in"
-              className="text-sm font-semibold text-navy hover:text-navy-light transition-colors px-4 py-2"
-            >
+            <Link href="/sign-in" className="text-sm font-medium px-2.5 py-1.5"
+              style={{ color: dark ? "#fff" : "#071443" }}>
               Sign In
             </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center bg-navy text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-navy-light transition-colors"
-            >
+            <Link href="/sign-up"
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
+              style={{ background: dark ? "#E84C88" : "#071443" }}>
               Get Started
             </Link>
           </div>
 
-          {/* Mobile Hamburger */}
-          <button
-            className="md:hidden p-2 text-navy-dark"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          {/* Mobile hamburger */}
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-1"
+            style={{ color: dark ? "#fff" : "#071443" }}>
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-border px-4 pb-6 pt-2 space-y-4">
-          <button
-            onClick={() => scrollTo("how-it-works")}
-            className="block w-full text-left text-base font-medium text-navy-dark/80 py-2"
-          >
-            How It Works
-          </button>
-          <button
-            onClick={() => scrollTo("pricing")}
-            className="block w-full text-left text-base font-medium text-navy-dark/80 py-2"
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => scrollTo("faq")}
-            className="block w-full text-left text-base font-medium text-navy-dark/80 py-2"
-          >
-            FAQ
-          </button>
-          <hr className="border-border" />
-          <Link
-            href="/sign-in"
-            className="block text-base font-semibold text-navy py-2"
-            onClick={() => setMobileOpen(false)}
-          >
+        <div className="md:hidden bg-[#FAFAF7] border-t border-[#e8e8f0] px-6 py-4 flex flex-col gap-1">
+          {["How It Works", "Pricing", "FAQ"].map((label) => (
+            <button key={label} onClick={() => scrollTo(label.toLowerCase().replace(/\s+/g, "-"))}
+              className="text-left text-base text-[#071443] font-medium py-2.5 px-2">
+              {label}
+            </button>
+          ))}
+          <hr className="border-[#e8e8f0] my-2" />
+          <Link href="/sign-in" onClick={() => setMobileOpen(false)}
+            className="text-center text-base text-[#071443] font-medium py-2.5 px-2">
             Sign In
           </Link>
-          <Link
-            href="/dashboard"
-            className="block text-center bg-navy text-white text-base font-semibold px-5 py-3 rounded-full hover:bg-navy-light transition-colors"
-            onClick={() => setMobileOpen(false)}
-          >
+          <Link href="/sign-up" onClick={() => setMobileOpen(false)}
+            className="flex items-center justify-center gap-2 bg-[#071443] text-white font-semibold py-3 rounded-full mt-1">
             Get Started
           </Link>
         </div>
@@ -150,142 +271,160 @@ function Navbar() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  HERO                                                               */
-/* ------------------------------------------------------------------ */
+/* ── Couple Carousel ───────────────────────────────────────────────── */
+
+function CoupleCarousel() {
+  const [current, setCurrent] = useState(0);
+  const [flipping, setFlipping] = useState(false);
+  const [direction, setDirection] = useState(1);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flippingRef = useRef(false);
+  flippingRef.current = flipping;
+
+  const advance = useCallback((dir = 1) => {
+    if (flippingRef.current) return;
+    setDirection(dir);
+    setFlipping(true);
+    setTimeout(() => {
+      setCurrent((c) => (c + dir + COUPLES.length) % COUPLES.length);
+      setFlipping(false);
+    }, 420);
+  }, []);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => advance(1), 4000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [advance]);
+
+  const couple = COUPLES[current];
+
+  return (
+    <div className="relative w-full max-w-[380px]">
+      {/* Card */}
+      <div className="rounded-3xl overflow-hidden relative"
+        style={{
+          aspectRatio: "3/4",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
+          transform: flipping
+            ? `perspective(900px) rotateY(${direction * 90}deg) scale(0.96)`
+            : "perspective(900px) rotateY(0deg) scale(1)",
+          transition: "transform 0.42s cubic-bezier(0.4,0,0.2,1)",
+          background: couple.bg,
+        }}>
+        {/* Placeholder */}
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+          style={{ background: `linear-gradient(160deg, ${couple.bg}cc 0%, ${couple.bg} 100%)` }}>
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" opacity="0.25">
+            <circle cx="60" cy="42" r="22" fill="white" />
+            <ellipse cx="60" cy="95" rx="38" ry="28" fill="white" />
+          </svg>
+          <span className="text-white/30 text-xs tracking-wider">COUPLE PHOTO</span>
+        </div>
+
+        {/* Caption overlay */}
+        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between"
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)", padding: "40px 20px 20px" }}>
+          <div>
+            <div className="text-white font-bold text-lg font-[family-name:var(--font-heading)] leading-tight">
+              {couple.names}
+            </div>
+            <div className="text-white/65 text-[13px] mt-1">Married in {couple.state}</div>
+          </div>
+          <div className="bg-white/15 backdrop-blur-lg border border-white/20 rounded-[10px] px-2.5 py-1.5 shrink-0">
+            <div className="text-[11px] font-extrabold text-white tracking-wider">{couple.abbr}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Prev / Next */}
+      <button onClick={() => { if (timerRef.current) clearInterval(timerRef.current); advance(-1); }}
+        className="absolute top-1/2 -left-[18px] -translate-y-1/2 w-9 h-9 rounded-full bg-white/[0.12] backdrop-blur-lg border border-white/20 text-white flex items-center justify-center text-base hover:bg-white/[0.22] transition-colors"
+        aria-label="Previous couple">
+        &#8249;
+      </button>
+      <button onClick={() => { if (timerRef.current) clearInterval(timerRef.current); advance(1); }}
+        className="absolute top-1/2 -right-[18px] -translate-y-1/2 w-9 h-9 rounded-full bg-white/[0.12] backdrop-blur-lg border border-white/20 text-white flex items-center justify-center text-base hover:bg-white/[0.22] transition-colors"
+        aria-label="Next couple">
+        &#8250;
+      </button>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-4">
+        {COUPLES.map((_, i) => (
+          <button key={i}
+            onClick={() => { if (timerRef.current) clearInterval(timerRef.current); setCurrent(i); }}
+            className="h-1.5 rounded-full border-none transition-all duration-300"
+            style={{
+              width: i === current ? 20 : 6,
+              background: i === current ? "#E84C88" : "rgba(255,255,255,0.25)",
+            }}
+            aria-label={`Couple ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
 
 function Hero() {
   return (
-    <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28 overflow-hidden">
-      {/* Gradient Background */}
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "linear-gradient(170deg, #F7F8FC 0%, #EDE7F6 40%, #F7F8FC 70%, #EBF0FF 100%)",
-        }}
-      />
+    <section className="relative overflow-hidden min-h-screen flex items-center" style={{ background: "#071443", paddingTop: 140, paddingBottom: 80 }}>
       {/* Decorative blobs */}
-      <div className="absolute top-20 left-0 w-[500px] h-[500px] rounded-full bg-pink/5 blur-3xl -z-10" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-navy/5 blur-3xl -z-10" />
+      <div className="absolute -top-[100px] right-[30%] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "rgba(232,76,136,0.06)" }} />
+      <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "rgba(26,58,143,0.4)" }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Pill badge */}
-        <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-border rounded-full px-4 py-1.5 mb-8 shadow-card">
-          <BadgeCheck size={16} className="text-success" />
-          <span className="text-sm font-medium text-navy-dark/80">
-            Trusted by 10,000+ couples nationwide
-          </span>
-        </div>
-
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-navy-dark leading-tight font-[family-name:var(--font-heading)] max-w-4xl mx-auto">
-          Protect What Matters Most
-          <span className="text-pink">&nbsp;&mdash;&nbsp;</span>
-          <span className="text-navy">Together.</span>
-        </h1>
-
-        <p className="mt-6 text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Create a legally binding, state-specific prenuptial agreement online
-          &mdash; in hours, not weeks. No $5,000 attorney fees. No awkward
-          office visits. Just clarity and confidence for your future together.
-        </p>
-
-        {/* CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 bg-navy text-white text-base font-semibold px-8 py-4 rounded-full hover:bg-navy-light transition-colors shadow-card-hover"
-          >
-            Create Your Prenup&nbsp;&mdash;&nbsp;$599
-            <ArrowRight size={18} />
-          </Link>
-          <button
-            onClick={() =>
-              document
-                .getElementById("how-it-works")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border border-navy text-base font-semibold px-8 py-4 rounded-full hover:bg-navy/5 transition-colors cursor-pointer"
-          >
-            See How It Works
-          </button>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
-          {[
-            { icon: Globe, label: "Valid in all 50 states" },
-            { icon: Scale, label: "Attorney-reviewed templates" },
-            { icon: Lock, label: "Bank-level encryption" },
-          ].map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="flex items-center gap-2.5 text-navy-dark/60"
-            >
-              <Icon size={18} className="text-teal" />
-              <span className="text-sm font-medium">{label}</span>
+      <div className="max-w-[1200px] mx-auto px-6 relative z-[1] w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-16 lg:gap-20 items-center">
+          {/* Left: copy */}
+          <div>
+            <div className="mb-7">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase px-3.5 py-1.5 rounded-full"
+                style={{ background: "rgba(232,76,136,0.15)", color: "#E84C88" }}>
+                Built for couples in all 50 states
+              </span>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  SOCIAL PROOF BAR                                                   */
-/* ------------------------------------------------------------------ */
-
-function SocialProof() {
-  return (
-    <section className="py-12 bg-white border-y border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star
-                  key={i}
-                  size={18}
-                  className="text-warning fill-warning"
-                />
+            <h1 className="font-[family-name:var(--font-heading)] font-extrabold text-white leading-[1.05] mb-6"
+              style={{ fontSize: "clamp(40px, 5.5vw, 76px)" }}>
+              The Smartest Thing<br />You&apos;ll Do Before<br />
+              <em className="text-[#E84C88]">&ldquo;I Do.&rdquo;</em>
+            </h1>
+            <p className="text-white/65 max-w-[480px] leading-relaxed mb-10"
+              style={{ fontSize: "clamp(16px, 1.8vw, 19px)" }}>
+              State-specific prenups in under 2 hours &mdash; drafted, reviewed, signed, and notarized online. For a fraction of attorney fees.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-12">
+              <Link href="/sign-up"
+                className="inline-flex items-center gap-2 text-white font-semibold px-8 py-4 rounded-full transition-colors hover:opacity-90"
+                style={{ background: "#E84C88", fontSize: 16 }}>
+                Start Your Prenup &mdash; $599
+                <ArrowRight size={16} />
+              </Link>
+              <button
+                onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+                className="inline-flex items-center gap-2 text-white font-semibold px-8 py-3.5 rounded-full border-2 border-white/40 transition-colors hover:bg-white/[0.15] cursor-pointer"
+                style={{ fontSize: 16 }}>
+                See How It Works
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-6">
+              {[
+                { icon: Globe, label: "Valid in all 50 states" },
+                { icon: Lock, label: "Bank-level encryption" },
+                { icon: Shield, label: "State-specific legal engine" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2 text-white/50 text-sm">
+                  <Icon size={18} className="text-[#0D8B8B]" />
+                  <span>{label}</span>
+                </div>
               ))}
             </div>
-            <span className="text-sm font-semibold text-navy-dark">4.9/5</span>
-            <span className="text-sm text-text-secondary">
-              from 2,400+ reviews
-            </span>
           </div>
 
-          <div className="hidden md:block w-px h-8 bg-border" />
-
-          {/* Stats */}
-          <div className="flex items-center gap-8">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-navy font-[family-name:var(--font-heading)]">
-                10,000+
-              </p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Couples served
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-navy font-[family-name:var(--font-heading)]">
-                50
-              </p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                States covered
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-navy font-[family-name:var(--font-heading)]">
-                &lt; 2 hrs
-              </p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Average completion
-              </p>
-            </div>
+          {/* Right: carousel */}
+          <div className="hidden lg:flex justify-center">
+            <CoupleCarousel />
           </div>
         </div>
       </div>
@@ -293,334 +432,71 @@ function SocialProof() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  HOW IT WORKS                                                       */
-/* ------------------------------------------------------------------ */
+/* ── Stats Bar ─────────────────────────────────────────────────────── */
 
-const steps = [
-  {
-    num: 1,
-    icon: ClipboardList,
-    title: "Answer Questions Together",
-    description:
-      "Walk through our guided questionnaire as a couple. Cover assets, debts, property, spousal support, and more — at your own pace, from anywhere.",
-  },
-  {
-    num: 2,
-    icon: FileText,
-    title: "We Generate Your Agreement",
-    description:
-      "Our 50-state legal engine creates a customized prenuptial agreement tailored to your state's laws, your assets, and your shared decisions.",
-  },
-  {
-    num: 3,
-    icon: Stamp,
-    title: "Sign & Notarize",
-    description:
-      "Review your completed agreement, e-sign it together, and get it notarized — all online. Your prenup is legally ready to go.",
-  },
-];
+function StatsBar() {
+  const s1 = useCounter(50);
+  const s2 = useCounter(2);
+  const s3 = useCounter(599);
+
+  return (
+    <div className="bg-white border-y border-[#e8e8f0]">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4">
+        <div ref={s1.ref} className="text-center py-7 px-6 border-r border-[#e8e8f0]">
+          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">{s1.count}</div>
+          <div className="text-[13px] text-[#5a5a72] mt-1.5">States covered</div>
+        </div>
+        <div ref={s2.ref} className="text-center py-7 px-6 md:border-r border-[#e8e8f0]">
+          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">&lt; {s2.count} hrs</div>
+          <div className="text-[13px] text-[#5a5a72] mt-1.5">Avg completion time</div>
+        </div>
+        <div ref={s3.ref} className="text-center py-7 px-6 border-r border-[#e8e8f0]">
+          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">${s3.count}</div>
+          <div className="text-[13px] text-[#5a5a72] mt-1.5">Per couple, all-inclusive</div>
+        </div>
+        <div className="text-center py-7 px-6">
+          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">100%</div>
+          <div className="text-[13px] text-[#5a5a72] mt-1.5">Online — no office visits</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── How It Works ──────────────────────────────────────────────────── */
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-20 sm:py-24 bg-bg scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold text-teal uppercase tracking-wide mb-3">
-            Simple Process
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-dark font-[family-name:var(--font-heading)]">
-            Three Steps to Peace of Mind
+    <section id="how-it-works" className="scroll-mt-16" style={{ background: "#FAFAF7", padding: "96px 0" }}>
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="text-center mb-16">
+          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">Simple Process</div>
+          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
+            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
+            Three steps to peace of mind
           </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            No complicated paperwork. No back-and-forth with attorneys. Just a
-            clear path from start to finish.
+          <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
+            No complicated back-and-forth. No weeks of waiting. Just a clear path from yes to signed.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {steps.map((step) => {
-            const Icon = step.icon;
-            return (
-              <div key={step.num} className="relative text-center group">
-                {/* Connector line (hidden on mobile and last item) */}
-                {step.num < 3 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] border-t-2 border-dashed border-border" />
-                )}
-                {/* Number badge */}
-                <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-navy text-white mb-6 shadow-card-hover group-hover:scale-105 transition-transform">
-                  <Icon size={32} strokeWidth={1.8} />
-                  <span className="absolute -top-1 -right-1 w-7 h-7 bg-pink text-white text-xs font-bold rounded-full flex items-center justify-center shadow-card">
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-navy-dark font-[family-name:var(--font-heading)] mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-text-secondary leading-relaxed max-w-xs mx-auto">
-                  {step.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  FEATURES GRID                                                      */
-/* ------------------------------------------------------------------ */
-
-const features = [
-  {
-    icon: Globe,
-    title: "50-State Legal Engine",
-    description:
-      "Our rules engine covers community property, equitable distribution, and every legal nuance across all 50 U.S. states.",
-    color: "bg-teal/10 text-teal",
-  },
-  {
-    icon: Users,
-    title: "Partner Collaboration",
-    description:
-      "Both partners work through the agreement together in real time. Shared dashboard, shared decisions, complete transparency.",
-    color: "bg-purple/10 text-purple",
-  },
-  {
-    icon: DollarSign,
-    title: "Financial Disclosure Tools",
-    description:
-      "Built-in tools to catalog assets, debts, income, and property — organized and formatted exactly as your state requires.",
-    color: "bg-pink/10 text-pink",
-  },
-  {
-    icon: PenTool,
-    title: "E-Sign & Notarize",
-    description:
-      "Sign your agreement electronically and get it notarized online. No printing, scanning, or trips to the notary office.",
-    color: "bg-teal/10 text-teal",
-  },
-  {
-    icon: Scale,
-    title: "Attorney Review Available",
-    description:
-      "Want an extra layer of confidence? Add a licensed attorney review of your completed agreement for peace of mind.",
-    color: "bg-purple/10 text-purple",
-  },
-  {
-    icon: RefreshCw,
-    title: "Unlimited Revisions",
-    description:
-      "Life changes. So can your agreement. Make unlimited edits before finalizing — no extra charges, no pressure.",
-    color: "bg-pink/10 text-pink",
-  },
-];
-
-function Features() {
-  return (
-    <section className="py-20 sm:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold text-pink uppercase tracking-wide mb-3">
-            Everything You Need
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-dark font-[family-name:var(--font-heading)]">
-            Built for Modern Couples
-          </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            Every feature designed to make creating a prenup as painless,
-            transparent, and thorough as possible.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((f) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={f.title}
-                className="bg-bg rounded-[16px] p-8 hover:shadow-card-hover transition-shadow duration-300 border border-border/60"
-              >
-                <div
-                  className={`inline-flex items-center justify-center w-12 h-12 rounded-[12px] ${f.color} mb-5`}
-                >
-                  <Icon size={24} />
-                </div>
-                <h3 className="text-lg font-bold text-navy-dark font-[family-name:var(--font-heading)] mb-2">
-                  {f.title}
-                </h3>
-                <p className="text-text-secondary text-sm leading-relaxed">
-                  {f.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  PRICING                                                            */
-/* ------------------------------------------------------------------ */
-
-const pricingPlans = [
-  {
-    name: "Prenup Agreement",
-    price: "$599",
-    per: "per couple",
-    badge: "Most Popular",
-    highlighted: true,
-    description:
-      "Everything you need to create a legally binding prenuptial agreement, customized to your state.",
-    features: [
-      "Guided questionnaire for both partners",
-      "State-specific legal document generation",
-      "Financial disclosure worksheets",
-      "Unlimited revisions before finalizing",
-      "Downloadable PDF agreement",
-      "E-signature for both partners",
-    ],
-    cta: "Get Started",
-    href: "/dashboard",
-  },
-  {
-    name: "Attorney Review",
-    price: "$699",
-    per: "per partner",
-    badge: null,
-    highlighted: false,
-    description:
-      "Have a licensed family law attorney review your completed agreement and provide feedback.",
-    features: [
-      "Review by a licensed attorney in your state",
-      "Written summary of findings",
-      "Suggestions for strengthening enforceability",
-      "One round of follow-up questions",
-      "Completed within 3-5 business days",
-    ],
-    cta: "Add Attorney Review",
-    href: "/dashboard",
-  },
-  {
-    name: "Online Notarization",
-    price: "$50",
-    per: "per session",
-    badge: null,
-    highlighted: false,
-    description:
-      "Get your signed agreement notarized online with a certified remote notary.",
-    features: [
-      "Live video notarization session",
-      "Certified remote online notary",
-      "Digital notary seal and certificate",
-      "Completed in under 30 minutes",
-      "Valid in all 50 states",
-    ],
-    cta: "Add Notarization",
-    href: "/dashboard",
-  },
-];
-
-function Pricing() {
-  return (
-    <section id="pricing" className="py-20 sm:py-24 bg-bg scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold text-teal uppercase tracking-wide mb-3">
-            Transparent Pricing
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-dark font-[family-name:var(--font-heading)]">
-            Simple, Upfront Pricing
-          </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            No hidden fees. No surprise charges. Pay once and own your agreement
-            forever.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {pricingPlans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-[16px] p-8 flex flex-col ${
-                plan.highlighted
-                  ? "bg-navy text-white ring-2 ring-pink shadow-card-hover scale-[1.02]"
-                  : "bg-white text-navy-dark border border-border shadow-card"
-              }`}
-            >
-              {plan.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-pink text-white text-xs font-bold px-4 py-1 rounded-full shadow-card">
-                  {plan.badge}
-                </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          {HOW_IT_WORKS_STEPS.map((s, i) => (
+            <div key={i} className="relative">
+              {/* Dashed connector */}
+              {i < 2 && (
+                <div className="hidden md:block absolute top-9 z-0"
+                  style={{
+                    left: "calc(50% + 52px)", right: "calc(-50% + 52px)", height: 2,
+                    background: "repeating-linear-gradient(90deg,#e8e8f0 0,#e8e8f0 8px,transparent 8px,transparent 16px)",
+                  }}
+                />
               )}
-
-              <h3
-                className={`text-lg font-bold font-[family-name:var(--font-heading)] ${
-                  plan.highlighted ? "text-white" : "text-navy-dark"
-                }`}
-              >
-                {plan.name}
-              </h3>
-
-              <div className="mt-4 mb-2">
-                <span
-                  className={`text-4xl font-extrabold font-[family-name:var(--font-heading)] ${
-                    plan.highlighted ? "text-white" : "text-navy"
-                  }`}
-                >
-                  {plan.price}
-                </span>
-                <span
-                  className={`text-sm ml-1.5 ${
-                    plan.highlighted ? "text-white/70" : "text-text-secondary"
-                  }`}
-                >
-                  {plan.per}
-                </span>
+              <div className="bg-white border border-[#e8e8f0] rounded-[20px] p-9 h-full relative z-[1]">
+                <div className="font-[family-name:var(--font-heading)] text-[56px] text-[#E84C88] opacity-25 leading-none mb-4">{s.n}</div>
+                <h3 className="text-xl font-bold text-[#071443] mb-3 leading-tight">{s.title}</h3>
+                <p className="text-[#5a5a72] text-[15px] leading-relaxed">{s.body}</p>
               </div>
-
-              <p
-                className={`text-sm leading-relaxed mb-6 ${
-                  plan.highlighted ? "text-white/80" : "text-text-secondary"
-                }`}
-              >
-                {plan.description}
-              </p>
-
-              <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((feat) => (
-                  <li key={feat} className="flex items-start gap-2.5">
-                    <CheckCircle2
-                      size={16}
-                      className={`mt-0.5 shrink-0 ${
-                        plan.highlighted ? "text-success" : "text-success"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm ${
-                        plan.highlighted ? "text-white/90" : "text-navy-dark/80"
-                      }`}
-                    >
-                      {feat}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={plan.href}
-                className={`inline-flex items-center justify-center font-semibold rounded-full py-3.5 px-6 text-base transition-colors ${
-                  plan.highlighted
-                    ? "bg-white text-navy hover:bg-lavender"
-                    : "bg-navy text-white hover:bg-navy-light"
-                }`}
-              >
-                {plan.cta}
-              </Link>
             </div>
           ))}
         </div>
@@ -629,194 +505,221 @@ function Pricing() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  STATE COVERAGE                                                     */
-/* ------------------------------------------------------------------ */
+/* ── Pricing ───────────────────────────────────────────────────────── */
 
-const sampleStates = [
-  "California",
-  "Texas",
-  "New York",
-  "Florida",
-  "Illinois",
-  "Pennsylvania",
-  "Ohio",
-  "Georgia",
-  "Washington",
-  "Arizona",
-  "Massachusetts",
-  "Colorado",
-];
+function Pricing() {
+  return (
+    <section id="pricing" className="scroll-mt-16" style={{ background: "#fff", padding: "96px 0" }}>
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="text-center mb-16">
+          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">Transparent Pricing</div>
+          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
+            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
+            One flat fee. No surprises.
+          </h2>
+          <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
+            Traditional attorneys charge $2,500&ndash;$10,000 per person. We charge $599 &mdash; total.
+          </p>
+        </div>
+
+        {/* Comparison callout */}
+        <div className="bg-[#FAFAF7] rounded-2xl px-7 py-5 flex flex-wrap items-center justify-between gap-4 mb-10 border border-[#e8e8f0]">
+          <div className="text-[15px] text-[#5a5a72]">
+            The average prenup attorney charges{" "}
+            <strong className="text-[#071443]">$2,500&ndash;$10,000 per person.</strong>
+          </div>
+          <div className="text-[15px] font-bold text-[#0D8B8B]">OurPrenup: $599/couple. That&apos;s it.</div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {PRICING_PLANS.map((p, i) => (
+            <div key={i} className="rounded-3xl p-9 flex flex-col relative"
+              style={{
+                background: p.featured ? "#071443" : "#fff",
+                color: p.featured ? "#fff" : "#071443",
+                border: p.featured ? "none" : "1px solid #e8e8f0",
+                transform: p.featured ? "scale(1.03)" : "none",
+                boxShadow: p.featured ? "0 20px 60px rgba(7,20,67,0.25)" : "none",
+              }}>
+              {p.badge && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#E84C88] text-white text-xs font-bold px-4 py-1 rounded-full">
+                  {p.badge}
+                </div>
+              )}
+              <div className="text-sm font-semibold mb-2" style={{ opacity: p.featured ? 0.6 : 0.5 }}>{p.name}</div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="font-[family-name:var(--font-heading)] text-5xl leading-none">{p.price}</span>
+                <span className="text-sm" style={{ opacity: 0.6 }}>{p.per}</span>
+              </div>
+              <p className="text-sm leading-relaxed mb-6 mt-2" style={{ opacity: p.featured ? 0.75 : 0.65 }}>{p.desc}</p>
+              <ul className="flex flex-col gap-2.5 mb-8 flex-1">
+                {p.items.map((item) => (
+                  <li key={item} className="flex gap-2.5 items-start">
+                    <Check size={18} className={p.featured ? "text-green-400 shrink-0" : "text-[#0D8B8B] shrink-0"} />
+                    <span className="text-sm leading-snug" style={{ opacity: p.featured ? 0.9 : 0.8 }}>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {p.href ? (
+                <Link href={p.href}
+                  className="flex items-center justify-center gap-2 text-white font-semibold text-[15px] py-3.5 rounded-full transition-opacity hover:opacity-90"
+                  style={{ background: p.featured ? "#E84C88" : "#071443" }}>
+                  Get Started <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <span className="flex items-center justify-center gap-2 text-white/60 font-semibold text-[15px] py-3.5 rounded-full"
+                  style={{ background: p.featured ? "rgba(232,76,136,0.3)" : "rgba(7,20,67,0.3)" }}>
+                  Coming Soon
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── State Coverage Marquee ────────────────────────────────────────── */
 
 function StateCoverage() {
-  return (
-    <section className="py-20 sm:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal/10 mb-6">
-            <ShieldCheck size={32} className="text-teal" />
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-dark font-[family-name:var(--font-heading)]">
-            Legally Valid in All 50 States
-          </h2>
-          <p className="mt-5 text-lg text-text-secondary leading-relaxed max-w-2xl mx-auto">
-            Our legal engine understands the nuances of every state — from
-            community property states like California and Texas to equitable
-            distribution states like New York and Florida. Your agreement is
-            generated to comply with your specific state&apos;s requirements for
-            enforceability.
-          </p>
-        </div>
-
-        {/* State badges */}
-        <div className="mt-12 flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
-          {sampleStates.map((state) => (
-            <span
-              key={state}
-              className="inline-flex items-center gap-1.5 bg-bg border border-border rounded-full px-4 py-2 text-sm font-medium text-navy-dark/70"
-            >
-              <CheckCircle2 size={14} className="text-success" />
-              {state}
-            </span>
-          ))}
-          <span className="inline-flex items-center bg-navy/5 border border-navy/10 rounded-full px-4 py-2 text-sm font-semibold text-navy">
-            + 38 more states
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  FAQ                                                                */
-/* ------------------------------------------------------------------ */
-
-const faqs = [
-  {
-    q: "Is an online prenup legally binding?",
-    a: "Yes. A prenuptial agreement created through OurPrenup is a legally binding contract, provided it meets your state's requirements — which our platform is specifically designed to satisfy. Requirements typically include full financial disclosure, voluntary signing, and in some states, notarization. Our guided process walks you through every requirement.",
-  },
-  {
-    q: "Do we both need separate attorneys?",
-    a: "It depends on your state. Some states strongly recommend (or effectively require) that each partner consult independent legal counsel for the agreement to be enforceable. Our platform will alert you if your state has this recommendation, and we offer an optional attorney review add-on for additional peace of mind.",
-  },
-  {
-    q: "How long does the process take?",
-    a: "Most couples complete their agreement in one to two hours of active work. You can save your progress and return at any time — there's no deadline. Once you finalize your answers, your agreement is generated instantly.",
-  },
-  {
-    q: "What if we disagree on something?",
-    a: "Disagreement is a normal part of the process. Our platform is designed for collaborative decision-making: both partners can see each other's responses, flag items for discussion, and work through differences together. If you get stuck, that's also a great time to consider our attorney review add-on.",
-  },
-  {
-    q: "Can we make changes after generating the agreement?",
-    a: "Absolutely. You can revise your answers and regenerate your agreement as many times as you need before finalizing. There are no extra charges for revisions. Once you've e-signed and notarized, however, changes would require a formal amendment.",
-  },
-  {
-    q: "What states do you cover?",
-    a: "We cover all 50 U.S. states and the District of Columbia. Our legal rules engine accounts for the specific requirements of each jurisdiction, including community property vs. equitable distribution states, notarization requirements, and disclosure standards.",
-  },
-  {
-    q: "Is my information secure?",
-    a: "Yes. We use bank-level AES-256 encryption for all data at rest and TLS 1.3 for data in transit. Your financial information is never shared with third parties. We follow SOC 2 security practices and conduct regular security audits.",
-  },
-  {
-    q: "What's included in the $599 price?",
-    a: "The $599 covers your complete prenuptial agreement for both partners: the guided questionnaire, financial disclosure tools, state-specific document generation, unlimited revisions, e-signatures, and a downloadable PDF. Attorney review and notarization are available as optional add-ons.",
-  },
-];
-
-function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const row1 = ALL_STATE_NAMES.slice(0, 25);
+  const row2 = ALL_STATE_NAMES.slice(25);
 
   return (
-    <section id="faq" className="py-20 sm:py-24 bg-bg scroll-mt-20">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <p className="text-sm font-semibold text-purple uppercase tracking-wide mb-3">
-            Common Questions
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-dark font-[family-name:var(--font-heading)]">
-            Frequently Asked Questions
-          </h2>
-        </div>
-
-        <div className="space-y-3">
-          {faqs.map((faq, i) => {
-            const isOpen = openIndex === i;
-            return (
-              <div
-                key={i}
-                className="bg-white rounded-[12px] border border-border overflow-hidden transition-shadow hover:shadow-card"
-              >
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="flex items-center justify-between w-full text-left px-6 py-5 cursor-pointer"
-                >
-                  <span className="text-base font-semibold text-navy-dark pr-4">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    size={20}
-                    className={`shrink-0 text-text-secondary transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                <div
-                  className={`overflow-hidden transition-all duration-300 ${
-                    isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <p className="px-6 pb-5 text-text-secondary text-sm leading-relaxed">
-                    {faq.a}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  CTA BANNER                                                         */
-/* ------------------------------------------------------------------ */
-
-function CtaBanner() {
-  return (
-    <section className="py-20 sm:py-24 bg-navy relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-navy-light/30 blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-pink/10 blur-3xl" />
-
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-[family-name:var(--font-heading)]">
-          Start Protecting Your Future Today
+    <section style={{ background: "#FAFAF7", padding: "96px 0" }} className="overflow-hidden">
+      <div className="max-w-[1200px] mx-auto px-6 text-center mb-12">
+        <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">50-State Coverage</div>
+        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
+          style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
+          Wherever you call home,<br />we&apos;ve got you covered.
         </h2>
-        <p className="mt-5 text-lg text-white/70 max-w-xl mx-auto">
-          Join thousands of couples who chose clarity and confidence over
-          uncertainty. Your prenup can be ready in hours.
+        <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
+          Our legal engine handles community property, equitable distribution, and every state&apos;s enforceability requirements.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 bg-white text-navy text-base font-semibold px-8 py-4 rounded-full hover:bg-lavender transition-colors"
-          >
-            Create Your Prenup
-            <ArrowRight size={18} />
+      </div>
+      {[row1, row2].map((row, ri) => (
+        <div key={ri} className="overflow-hidden mb-3.5" style={{ direction: ri === 1 ? "rtl" : "ltr" }}>
+          <div className="flex gap-12 whitespace-nowrap"
+            style={{
+              animation: `marquee 28s linear infinite`,
+              animationDirection: ri === 1 ? "reverse" : "normal",
+            }}>
+            {[...row, ...row].map((s, i) => (
+              <div key={i} className="inline-flex items-center gap-1.5 bg-white border border-[#e8e8f0] rounded-full px-4 py-2 text-sm font-medium text-[#071443] shrink-0">
+                <Check size={14} className="text-[#0D8B8B]" /> {s}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/* ── Testimonials ──────────────────────────────────────────────────── */
+
+function TestimonialsSection() {
+  return (
+    <section style={{ background: "#fff", padding: "96px 0" }} className="overflow-hidden">
+      <div className="max-w-[1200px] mx-auto px-6 mb-12">
+        <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#E84C88] mb-3">Real Feedback</div>
+        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443]"
+          style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
+          What couples are saying
+        </h2>
+      </div>
+      <div className="flex gap-5 overflow-x-auto px-6 pb-2" style={{ scrollbarWidth: "thin" }}>
+        {TESTIMONIALS.map((r, i) => (
+          <div key={i} className="bg-white border border-[#e8e8f0] rounded-[20px] p-7 shrink-0 w-[340px]">
+            <div className="flex gap-0.5 mb-4">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} size={16} className="fill-[#E84C88] text-[#E84C88]" />
+              ))}
+            </div>
+            <p className="text-base text-[#071443] leading-relaxed mb-5">&ldquo;{r.quote}&rdquo;</p>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#F0EFE9] shrink-0" />
+              <div>
+                <div className="text-sm font-semibold text-[#071443]">{r.name}</div>
+                <div className="text-xs text-[#5a5a72]">{r.state}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── FAQ ────────────────────────────────────────────────────────────── */
+
+function FAQSection() {
+  const [open, setOpen] = useState<number | null>(null);
+
+  return (
+    <section id="faq" className="scroll-mt-16" style={{ background: "#FAFAF7", padding: "96px 0" }}>
+      <div className="max-w-[780px] mx-auto px-6">
+        <div className="text-center mb-14">
+          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#E84C88] mb-3">Common Questions</div>
+          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443]"
+            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
+            Frequently asked questions
+          </h2>
+        </div>
+        <div>
+          {FAQS.map((f, i) => (
+            <div key={i} className="border-b border-[#e8e8f0]">
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                aria-expanded={open === i}
+                aria-controls={`faq-panel-${i}`}
+                className="w-full text-left flex items-center justify-between gap-4 py-5 text-[17px] font-semibold text-[#071443] cursor-pointer bg-transparent border-none">
+                {f.q}
+                <ChevronDown size={20} className={`shrink-0 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`} />
+              </button>
+              <div
+                id={`faq-panel-${i}`}
+                role="region"
+                className="overflow-hidden transition-all duration-300"
+                style={{ maxHeight: open === i ? 400 : 0, opacity: open === i ? 1 : 0 }}>
+                <p className="pb-5 text-base text-[#5a5a72] leading-relaxed">{f.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── CTA Banner ────────────────────────────────────────────────────── */
+
+function CTABanner() {
+  return (
+    <section className="relative overflow-hidden" style={{ background: "#071443", padding: "96px 0" }}>
+      <div className="absolute -top-[120px] -right-20 w-[480px] h-[480px] rounded-full pointer-events-none" style={{ background: "rgba(232,76,136,0.1)" }} />
+      <div className="absolute -bottom-20 -left-[60px] w-80 h-80 rounded-full pointer-events-none" style={{ background: "rgba(26,58,143,0.5)" }} />
+      <div className="max-w-[1200px] mx-auto px-6 text-center relative z-[1]">
+        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-white mb-5"
+          style={{ fontSize: "clamp(32px, 5vw, 60px)", lineHeight: 1.1 }}>
+          You&apos;re writing your story together.<br />
+          <em className="text-[#E84C88]">Start on the same page.</em>
+        </h2>
+        <p className="text-lg text-white/60 max-w-[480px] mx-auto mb-10 leading-relaxed">
+          Your prenup can be ready today. Clarity over uncertainty.
+        </p>
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Link href="/sign-up"
+            className="inline-flex items-center gap-2 text-white font-semibold px-9 py-4 rounded-full transition-opacity hover:opacity-90"
+            style={{ background: "#E84C88", fontSize: 16 }}>
+            Start Your Prenup &mdash; $599
+            <ArrowRight size={16} />
           </Link>
           <button
-            onClick={() =>
-              document
-                .getElementById("pricing")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="inline-flex items-center justify-center gap-2 bg-transparent text-white border border-white/30 text-base font-semibold px-8 py-4 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-          >
+            onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+            className="inline-flex items-center gap-2 text-white font-semibold px-9 py-3.5 rounded-full border-2 border-white/40 hover:bg-white/[0.15] transition-colors cursor-pointer"
+            style={{ fontSize: 16 }}>
             View Pricing
           </button>
         </div>
@@ -825,148 +728,74 @@ function CtaBanner() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  FOOTER                                                             */
-/* ------------------------------------------------------------------ */
+/* ── Footer ────────────────────────────────────────────────────────── */
 
 function Footer() {
   return (
-    <footer className="bg-navy-dark text-white/70">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <span className="text-2xl font-bold text-white font-[family-name:var(--font-heading)]">
-              OurPrenup
-            </span>
-            <p className="mt-4 text-sm leading-relaxed max-w-md">
-              Modern prenuptial agreements for modern couples. Affordable,
-              transparent, and legally sound — in every state.
+    <footer style={{ background: "#06102e", color: "rgba(255,255,255,0.55)" }}>
+      <div className="max-w-[1200px] mx-auto px-6 pt-16 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-12 mb-12">
+          <div>
+            <div className="font-[family-name:var(--font-heading)] text-2xl text-white mb-4">OurPrenup</div>
+            <p className="text-sm leading-relaxed max-w-[340px]">
+              Modern prenuptial agreements for modern couples. Affordable, transparent, and legally sound &mdash; in every state.
             </p>
           </div>
-
-          {/* Product Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
-              Product
-            </h4>
-            <ul className="space-y-3">
-              <li>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("how-it-works")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="text-sm hover:text-white transition-colors cursor-pointer"
-                >
-                  How It Works
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("pricing")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="text-sm hover:text-white transition-colors cursor-pointer"
-                >
-                  Pricing
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("faq")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="text-sm hover:text-white transition-colors cursor-pointer"
-                >
-                  FAQ
-                </button>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard"
-                  className="text-sm hover:text-white transition-colors"
-                >
-                  Get Started
+            <div className="text-xs font-bold tracking-[0.1em] uppercase text-white/40 mb-4">Product</div>
+            <div className="flex flex-col gap-3">
+              {[
+                { label: "How It Works", href: "#how-it-works" },
+                { label: "Pricing", href: "#pricing" },
+                { label: "FAQ", href: "#faq" },
+                { label: "Get Started", href: "/sign-up" },
+              ].map(({ label, href }) => (
+                <Link key={label} href={href} className="text-sm text-white/55 hover:text-white transition-colors">
+                  {label}
                 </Link>
-              </li>
-            </ul>
+              ))}
+            </div>
           </div>
-
-          {/* Legal Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
-              Legal
-            </h4>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-sm hover:text-white transition-colors"
-                >
-                  Terms of Service
+            <div className="text-xs font-bold tracking-[0.1em] uppercase text-white/40 mb-4">Legal</div>
+            <div className="flex flex-col gap-3">
+              {[
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Privacy Policy", href: "/privacy" },
+              ].map(({ label, href }) => (
+                <Link key={label} href={href} className="text-sm text-white/55 hover:text-white transition-colors">
+                  {label}
                 </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-sm hover:text-white transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/disclaimer"
-                  className="text-sm hover:text-white transition-colors"
-                >
-                  Disclaimer
-                </Link>
-              </li>
-            </ul>
+              ))}
+            </div>
           </div>
         </div>
-
-        {/* Disclaimer + Copyright */}
-        <div className="mt-16 pt-8 border-t border-white/10">
-          <p className="text-xs leading-relaxed text-white/40 max-w-3xl">
-            OurPrenup provides self-help tools for creating prenuptial
-            agreements. We are not a law firm and do not provide legal advice.
-            For legal advice, consult a licensed attorney in your state. The
-            information provided on this platform is for general informational
-            purposes only and should not be construed as legal advice.
+        <div className="border-t border-white/[0.08] pt-8">
+          <p className="text-xs leading-relaxed text-white/30 max-w-[680px] mb-3">
+            OurPrenup provides self-help tools for creating prenuptial agreements. We are not a law firm and do not provide legal advice. Consult a licensed attorney in your state for legal advice specific to your situation.
           </p>
-          <p className="mt-4 text-xs text-white/40">
-            &copy; 2026 OurPrenup. All rights reserved.
-          </p>
+          <p className="text-xs text-white/25">&copy; {new Date().getFullYear()} OurPrenup. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  PAGE                                                               */
-/* ------------------------------------------------------------------ */
+/* ── Page ───────────────────────────────────────────────────────────── */
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <main className="scroll-smooth">
+    <>
       <Navbar />
       <Hero />
-      <SocialProof />
+      <StatsBar />
       <HowItWorks />
-      <Features />
       <Pricing />
       <StateCoverage />
-      <FAQ />
-      <CtaBanner />
+      <TestimonialsSection />
+      <FAQSection />
+      <CTABanner />
       <Footer />
-    </main>
+    </>
   );
 }

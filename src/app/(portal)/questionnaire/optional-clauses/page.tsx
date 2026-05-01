@@ -30,6 +30,7 @@ import { useQuestionnaireStep } from "@/lib/hooks/useQuestionnaireStep";
 import SaveIndicator from "@/components/portal/SaveIndicator";
 import QuestionnaireLoading from "@/components/portal/QuestionnaireLoading";
 import { usePaymentStatus } from "@/lib/hooks/usePaymentStatus";
+import { validateStep, type FieldErrors } from "@/lib/validation/questionnaire-schemas";
 
 const CATEGORY_CONFIG: Record<
   OptionalClause["category"],
@@ -50,10 +51,20 @@ export default function OptionalClausesPage() {
   const { completeStep } = useProgress();
   const { hasPrenup: hasPaid } = usePaymentStatus();
   const router = useRouter();
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const handleNext = async () => {
+    if (hasPaid) {
+      const { valid, errors } = validateStep("optional-clauses", answers);
+      if (!valid) {
+        setFieldErrors(errors);
+        return;
+      }
+      setFieldErrors({});
+    }
     try {
       await saveNow();
+      await fetch("/api/questionnaire/optional-clauses/complete", { method: "POST" });
     } catch {
       return;
     }
@@ -193,7 +204,11 @@ export default function OptionalClausesPage() {
               key={q.id}
               question={q}
               value={answers[q.id] || (q.type === "multi-select" ? [] : "")}
-              onChange={(val) => updateAnswer(q.id, val)}
+              onChange={(val) => {
+                updateAnswer(q.id, val);
+                if (fieldErrors[q.id]) setFieldErrors((prev) => { const next = { ...prev }; delete next[q.id]; return next; });
+              }}
+              error={fieldErrors[q.id]}
             />
           ))}
         </div>

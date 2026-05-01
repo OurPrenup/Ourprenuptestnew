@@ -10,6 +10,7 @@ import { baseStyles } from "./styles";
 function formatDate(iso: string): string {
   if (!iso) return "_______________";
   const d = new Date(iso);
+  if (isNaN(d.getTime())) return "_______________";
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",

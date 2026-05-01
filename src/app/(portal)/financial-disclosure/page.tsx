@@ -80,7 +80,6 @@ const categories = [
 const currentYear = new Date().getFullYear();
 
 export default function FinancialDisclosurePage() {
-  const [activeTab, setActiveTab] = useState<"yours" | "partner">("yours");
   const [data, setData] = useState<Record<string, CategoryState>>(
     Object.fromEntries(
       categories.map((c) => [c.key, { items: [], expanded: false }])
@@ -93,6 +92,9 @@ export default function FinancialDisclosurePage() {
     { year: currentYear - 1, amount: "", owner: "You" },
     { year: currentYear - 2, amount: "", owner: "You" },
   ]);
+  const [jointItems, setJointItems] = useState<DisclosureItem[]>([]);
+  const [addingJoint, setAddingJoint] = useState(false);
+  const [newJointItem, setNewJointItem] = useState({ description: "", value: "" });
 
   const { completeStep } = useProgress();
   const [isLoading, setIsLoading] = useState(true);
@@ -113,6 +115,7 @@ export default function FinancialDisclosurePage() {
           if (!cancelled && apiData && Object.keys(apiData).length > 0) {
             if (apiData.categories) setData(apiData.categories);
             if (apiData.incomeData) setIncomeData(apiData.incomeData);
+            if (apiData.jointItems) setJointItems(apiData.jointItems);
           }
         }
       } catch {
@@ -136,7 +139,7 @@ export default function FinancialDisclosurePage() {
       const res = await fetch("/api/financial-disclosure", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: { categories: data, incomeData } }),
+        body: JSON.stringify({ data: { categories: data, incomeData, jointItems } }),
       });
       if (!res.ok) throw new Error("Save failed");
     } catch {
@@ -144,7 +147,7 @@ export default function FinancialDisclosurePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [data, incomeData]);
+  }, [data, incomeData, jointItems]);
 
   // Debounced auto-save
   useEffect(() => {
@@ -155,15 +158,29 @@ export default function FinancialDisclosurePage() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(saveToApi, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [data, incomeData, saveToApi]);
+  }, [data, incomeData, jointItems, saveToApi]);
 
   const handleMarkComplete = async () => {
-    await saveToApi();
+    setSaveError(null);
+    setIsSaving(true);
     try {
-      await fetch("/api/financial-disclosure/complete", { method: "POST" });
+      const saveRes = await fetch("/api/financial-disclosure", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: { categories: data, incomeData, jointItems } }),
+      });
+      if (!saveRes.ok) throw new Error("Failed to save disclosure data");
+
+      const completeRes = await fetch("/api/financial-disclosure/complete", { method: "POST" });
+      if (!completeRes.ok) {
+        const body = await completeRes.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to mark as complete");
+      }
       completeStep("financial-disclosure");
-    } catch {
-      setSaveError("Failed to mark complete");
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to mark complete");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -186,7 +203,7 @@ export default function FinancialDisclosurePage() {
             id: Date.now().toString(),
             description: newItem.description,
             value: newItem.value,
-            owner: activeTab === "yours" ? "You" : "Partner",
+            owner: "You",
           },
         ],
       },
@@ -256,36 +273,12 @@ export default function FinancialDisclosurePage() {
         </div>
       </div>
 
-      {/* Separate Property Section */}
+      {/* Your Property Section */}
       <div>
-        <h2 className="text-xl font-semibold text-navy mb-1">Separate Property</h2>
+        <h2 className="text-xl font-semibold text-navy mb-1">Your Separate Property</h2>
         <p className="text-text-secondary text-sm mb-4">
-          Enter all of the property that you or your partner own individually
+          Enter all of the property that you own individually. Your partner will fill out their own disclosure when they log in.
         </p>
-
-        {/* Tabs */}
-        <div className="flex border-b border-border mb-6">
-          <button
-            onClick={() => setActiveTab("yours")}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "yours"
-                ? "border-teal text-teal"
-                : "border-transparent text-text-secondary hover:text-navy"
-            }`}
-          >
-            Your Property
-          </button>
-          <button
-            onClick={() => setActiveTab("partner")}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "partner"
-                ? "border-teal text-teal"
-                : "border-transparent text-text-secondary hover:text-navy"
-            }`}
-          >
-            Partner&apos;s Property
-          </button>
-        </div>
 
         {/* Category Cards */}
         <div className="space-y-4">
@@ -351,7 +344,7 @@ export default function FinancialDisclosurePage() {
                           placeholder="$0.00"
                         />
                         <span className="text-sm text-navy bg-navy/5 px-2 py-1 rounded-full text-center w-fit">
-                          {activeTab === "yours" ? "You" : "Partner"}
+                          You
                         </span>
                       </div>
                     ))}
@@ -432,20 +425,95 @@ export default function FinancialDisclosurePage() {
           List all property you and your partner own together prior to marriage
         </p>
         <Card>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🤝</span>
-              <div>
-                <h3 className="text-sm font-bold text-navy">Shared Assets</h3>
-                <p className="text-xs text-text-secondary">
-                  i.e. property, vehicles, furniture, shared bank accounts
-                </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🤝</span>
+                <div>
+                  <h3 className="text-sm font-bold text-navy">Shared Assets</h3>
+                  <p className="text-xs text-text-secondary">
+                    i.e. property, vehicles, furniture, shared bank accounts
+                  </p>
+                </div>
               </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setAddingJoint(!addingJoint);
+                  setNewJointItem({ description: "", value: "" });
+                }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
             </div>
-            <Button variant="primary" size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Add
-            </Button>
+
+            {jointItems.length > 0 && (
+              <div className="space-y-2 border-t border-border pt-3">
+                {jointItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-2 px-3 bg-bg rounded-lg">
+                    <div className="flex-1">
+                      <span className="text-sm text-navy font-medium">{item.description}</span>
+                      <span className="text-sm text-text-secondary ml-3">${item.value}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-navy bg-navy/5 px-2 py-0.5 rounded-full">Joint</span>
+                      <button
+                        onClick={() => setJointItems((prev) => prev.filter((i) => i.id !== item.id))}
+                        className="p-1 text-text-secondary hover:text-coral transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {addingJoint && (
+              <div className="border-t border-border pt-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Description"
+                    value={newJointItem.description}
+                    onChange={(e) => setNewJointItem((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="e.g. Joint checking at Wells Fargo"
+                  />
+                  <Input
+                    label="Estimated Value"
+                    value={newJointItem.value}
+                    onChange={(e) => setNewJointItem((prev) => ({ ...prev, value: e.target.value }))}
+                    placeholder="e.g. 15000"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      if (!newJointItem.description || !newJointItem.value) return;
+                      setJointItems((prev) => [
+                        ...prev,
+                        {
+                          id: Date.now().toString(),
+                          description: newJointItem.description,
+                          value: newJointItem.value,
+                          owner: "Joint",
+                        },
+                      ]);
+                      setNewJointItem({ description: "", value: "" });
+                      setAddingJoint(false);
+                    }}
+                  >
+                    Save
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setAddingJoint(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>

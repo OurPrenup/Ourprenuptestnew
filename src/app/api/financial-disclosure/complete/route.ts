@@ -21,6 +21,49 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
   if (!user.coupleId) return NextResponse.json({ error: "No couple linked" }, { status: 400 });
 
+  // Verify disclosure has actual data before allowing completion
+  const [existing] = await db
+    .select({ data: financialDisclosures.data })
+    .from(financialDisclosures)
+    .where(
+      and(
+        eq(financialDisclosures.userId, user.id),
+        eq(financialDisclosures.coupleId, user.coupleId)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    return NextResponse.json(
+      { error: "No disclosure data found. Save data first." },
+      { status: 404 }
+    );
+  }
+
+  const disclosureData = existing.data as Record<string, unknown> | null;
+  const categories = (disclosureData as Record<string, unknown>)?.categories as
+    | Record<string, { items: unknown[] }>
+    | undefined;
+  const hasItems =
+    categories &&
+    Object.values(categories).some((cat) => cat?.items && cat.items.length > 0);
+  const incomeData = (disclosureData as Record<string, unknown>)?.incomeData as
+    | { amount: string }[]
+    | undefined;
+  const hasIncome =
+    incomeData &&
+    incomeData.some((row) => row.amount && row.amount.trim() !== "");
+
+  if (!hasItems && !hasIncome) {
+    return NextResponse.json(
+      {
+        error:
+          "Please add at least one asset, debt, or income entry before marking as complete.",
+      },
+      { status: 400 }
+    );
+  }
+
   const result = await db
     .update(financialDisclosures)
     .set({ completedAt: new Date(), updatedAt: new Date() })

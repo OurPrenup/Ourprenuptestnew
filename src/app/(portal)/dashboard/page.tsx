@@ -197,8 +197,7 @@ export default function DashboardPage() {
           💡 Most couples complete their prenup in under 45 minutes.
         </p>
         <p className="text-xs text-text-secondary mt-1">
-          Over 4,000 couples have used our platform to protect their future
-          together.
+          You can save your progress and come back anytime.
         </p>
       </div>
     </div>

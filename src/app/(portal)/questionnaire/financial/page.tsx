@@ -32,6 +32,7 @@ export default function FinancialPage() {
     setFieldErrors({});
     try {
       await saveNow();
+      await fetch("/api/questionnaire/financial/complete", { method: "POST" });
     } catch {
       return;
     }

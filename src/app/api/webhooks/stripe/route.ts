@@ -37,15 +37,19 @@ export async function POST(req: Request) {
     case "checkout.session.completed": {
       const session = event.data.object;
 
-      // Only mark as completed if payment is actually received
-      // (handles delayed payment methods like bank transfers)
       if (session.payment_status !== "paid") {
-        // Payment not yet received — will get async_payment_succeeded later
         break;
       }
 
-      // Update payment status
+      // Idempotency: skip if already completed (handles Stripe retries)
       if (session.id) {
+        const [existing] = await db
+          .select({ status: payments.status })
+          .from(payments)
+          .where(eq(payments.stripeSessionId, session.id))
+          .limit(1);
+        if (existing?.status === "completed") break;
+
         await db
           .update(payments)
           .set({ status: "completed", updatedAt: new Date() })
@@ -107,9 +111,15 @@ export async function POST(req: Request) {
     }
 
     case "checkout.session.async_payment_succeeded": {
-      // Delayed payment method has now been received
       const session = event.data.object;
       if (session.id) {
+        const [existing] = await db
+          .select({ status: payments.status })
+          .from(payments)
+          .where(eq(payments.stripeSessionId, session.id))
+          .limit(1);
+        if (existing?.status === "completed") break;
+
         await db
           .update(payments)
           .set({ status: "completed", updatedAt: new Date() })

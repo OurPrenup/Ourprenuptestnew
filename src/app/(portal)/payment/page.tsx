@@ -37,8 +37,9 @@ const plans = [
       "Personalized legal advice",
       "Includes online notarization",
     ],
-    cta: "Add Attorney Review",
+    cta: "Coming Soon",
     highlighted: false,
+    comingSoon: true,
   },
   {
     name: "Notarization Only",
@@ -53,8 +54,9 @@ const plans = [
       "Digital notarized document",
       "Same-day availability",
     ],
-    cta: "Add Notarization",
+    cta: "Coming Soon",
     highlighted: false,
+    comingSoon: true,
   },
 ];
 
@@ -161,11 +163,11 @@ export default function PaymentPage() {
 
             <div className="mt-6">
               <Button
-                variant={plan.highlighted ? "primary" : "secondary"}
+                variant={plan.highlighted ? "primary" : plan.comingSoon ? "disabled" : "secondary"}
                 size="md"
                 className="w-full justify-center"
-                onClick={() => handleCheckout(plan.productType)}
-                disabled={loading !== null}
+                onClick={() => !plan.comingSoon && handleCheckout(plan.productType)}
+                disabled={loading !== null || plan.comingSoon}
               >
                 {loading === plan.productType ? (
                   <>
@@ -190,10 +192,6 @@ export default function PaymentPage() {
         <div className="flex items-center gap-1.5">
           <Check className="w-4 h-4" />
           <span>30-day money-back guarantee</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Star className="w-4 h-4" />
-          <span>4.7★ rated by couples</span>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@
 import React from "react";
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { DocumentContent } from "@/lib/document-assembly/types";
+import { isSpousalSupportDisabled } from "@/legal/engine";
 import { baseStyles } from "./styles";
 
 // ---------------------------------------------------------------------------
@@ -14,6 +15,7 @@ import { baseStyles } from "./styles";
 function formatDate(iso: string): string {
   if (!iso) return "_______________";
   const d = new Date(iso);
+  if (isNaN(d.getTime())) return "_______________";
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -263,13 +265,17 @@ export function PrenupDocument({ content }: { content: DocumentContent }) {
           {describeDebtHandling(content.provisions.maritalDebtHandling)}
         </Text>
 
-        {/* ARTICLE: Spousal Support */}
-        <Text style={baseStyles.sectionTitle}>
-          ARTICLE {nextArticle()}. SPOUSAL SUPPORT
-        </Text>
-        <Text style={baseStyles.paragraph}>
-          {describeSpousalSupport(content.provisions.spousalSupportApproach)}
-        </Text>
+        {/* ARTICLE: Spousal Support — omitted for states that prohibit prenup spousal support waivers */}
+        {!isSpousalSupportDisabled(content.stateCode) && (
+          <>
+            <Text style={baseStyles.sectionTitle}>
+              ARTICLE {nextArticle()}. SPOUSAL SUPPORT
+            </Text>
+            <Text style={baseStyles.paragraph}>
+              {describeSpousalSupport(content.provisions.spousalSupportApproach)}
+            </Text>
+          </>
+        )}
 
         {/* ARTICLE: Financial Disclosure */}
         <Text style={baseStyles.sectionTitle}>

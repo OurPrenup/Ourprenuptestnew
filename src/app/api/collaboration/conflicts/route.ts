@@ -18,6 +18,16 @@ import { deepEqual } from "@/lib/utils";
 
 import type { ConflictItem } from "@/lib/types/collaboration";
 
+// Fields where each partner answers about themselves — not conflicts
+const PER_PERSON_FIELDS = new Set([
+  "introduction:first_name",
+  "introduction:last_name",
+  "introduction:date_of_birth",
+  "introduction:email",
+  "introduction:previously_married",
+  "introduction:prenup_goals",
+]);
+
 const ALL_STEP_IDS = [
   "introduction",
   "property",
@@ -164,6 +174,8 @@ export async function GET() {
     ]);
 
     for (const questionId of allQuestionIds) {
+      if (PER_PERSON_FIELDS.has(`${stepId}:${questionId}`)) continue;
+
       const pVal = primary[questionId];
       const partVal = partner[questionId];
 
@@ -266,6 +278,8 @@ export async function POST() {
     ]);
 
     for (const questionId of allQuestionIds) {
+      if (PER_PERSON_FIELDS.has(`${stepId}:${questionId}`)) continue;
+
       const pVal = primary[questionId];
       const partVal = partner[questionId];
 

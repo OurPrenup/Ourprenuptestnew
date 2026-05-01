@@ -73,6 +73,9 @@ export function useAutoSave({
   /** Manual save that throws on failure */
   const saveNow = useCallback(() => save({ rethrow: true }), [save]);
 
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
   // Debounced auto-save on data change
   useEffect(() => {
     if (!enabled) return;
@@ -90,11 +93,20 @@ export function useAutoSave({
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
-        // Flush the pending save immediately so data isn't lost on navigation
-        save();
       }
     };
   }, [data, delay, enabled, save]);
+
+  // Flush pending save on actual unmount only
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        saveRef.current();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { isSaving, error, lastSavedAt, saveNow };
 }

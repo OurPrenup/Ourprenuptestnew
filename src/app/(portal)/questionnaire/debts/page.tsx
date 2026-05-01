@@ -29,6 +29,7 @@ export default function DebtsPage() {
     setFieldErrors({});
     try {
       await saveNow();
+      await fetch("/api/questionnaire/debts/complete", { method: "POST" });
     } catch {
       return;
     }

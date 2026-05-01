@@ -146,9 +146,11 @@ function validateAttorney(
   results: ValidationResult[]
 ): void {
   const req = config.independentCounsel.requirement;
+  const party1Has = answers.hasAttorney?.party1 ?? false;
+  const party2Has = answers.hasAttorney?.party2 ?? false;
 
-  if (req === "required" && answers.hasAttorney) {
-    if (!answers.hasAttorney.party1 || !answers.hasAttorney.party2) {
+  if (req === "required") {
+    if (!party1Has || !party2Has) {
       results.push({
         field: "attorney",
         severity: "error",
@@ -158,8 +160,8 @@ function validateAttorney(
     }
   }
 
-  if (req === "required_for_spousal_support" && answers.includesSpousalSupport && answers.hasAttorney) {
-    if (!answers.hasAttorney.party1 || !answers.hasAttorney.party2) {
+  if (req === "required_for_spousal_support" && answers.includesSpousalSupport) {
+    if (!party1Has || !party2Has) {
       results.push({
         field: "attorney",
         severity: "error",
@@ -169,8 +171,8 @@ function validateAttorney(
     }
   }
 
-  if (req === "conditionally_required" && answers.hasAttorney) {
-    if (!answers.hasAttorney.party1 || !answers.hasAttorney.party2) {
+  if (req === "conditionally_required") {
+    if (!party1Has || !party2Has) {
       results.push({
         field: "attorney",
         severity: "warning",
@@ -319,7 +321,7 @@ function validateUniqueRules(config: StateLegalConfig, results: ValidationResult
     } else if (rule.severity === "important") {
       results.push({
         field: rule.ruleId,
-        severity: "info",
+        severity: "warning",
         message: `${config.stateName}: ${rule.description}`,
         stateSpecific: true,
       });

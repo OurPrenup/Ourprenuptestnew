@@ -221,7 +221,7 @@ export default function CollaborationPage() {
 
           {/* Conflict cards — unresolved first */}
           <div className="space-y-4">
-            {conflicts
+            {[...conflicts]
               .sort((a, b) => {
                 if (a.status === "unresolved" && b.status === "resolved")
                   return -1;

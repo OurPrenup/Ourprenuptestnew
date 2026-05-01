@@ -39,7 +39,7 @@ interface ProgressContextValue {
 const ProgressContext = createContext<ProgressContextValue | null>(null);
 
 function getSessionSteps(): Set<string> {
-  if (typeof window === "undefined") return new Set(["invite"]);
+  if (typeof window === "undefined") return new Set();
   const stored = sessionStorage.getItem("ourprenup_completed_steps");
   if (stored) {
     try {
@@ -48,7 +48,7 @@ function getSessionSteps(): Set<string> {
       // fall through
     }
   }
-  return new Set(["invite"]);
+  return new Set();
 }
 
 function persistToSession(steps: Set<string>) {

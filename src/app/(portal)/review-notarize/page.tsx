@@ -1,14 +1,12 @@
 "use client";
 
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 import {
   FileSearch,
   PenTool,
   Video,
   Download,
   Info,
-  Square,
   Users,
   FileCheck,
   Clock,
@@ -51,12 +49,6 @@ const processSteps = [
     iconBg: "bg-success-light",
     iconColor: "text-success",
   },
-];
-
-const requirements = [
-  "Prenup document generated",
-  "Both partners have reviewed the agreement",
-  "Payment completed",
 ];
 
 export default function ReviewNotarizePage() {
@@ -230,25 +222,19 @@ export default function ReviewNotarizePage() {
       {/* Legal Validation */}
       <ValidationPanel autoFetch />
 
-      {/* Requirements */}
+      {/* Next Steps */}
       <Card>
-        <h2 className="text-lg font-semibold text-navy mb-4">Requirements</h2>
+        <h2 className="text-lg font-semibold text-navy mb-4">Next Steps</h2>
         <p className="text-sm text-text-secondary mb-4">
-          Complete the following before you can sign and notarize:
+          Online e-signing is coming soon. In the meantime, follow the signing
+          requirements above to execute your agreement:
         </p>
-        <div className="space-y-3">
-          {requirements.map((req) => (
-            <div key={req} className="flex items-center gap-3">
-              <Square className="w-4 h-4 text-text-secondary/40 shrink-0" />
-              <span className="text-sm text-navy/70">{req}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-6">
-          <Button variant="primary" disabled>
-            Start Signing
-          </Button>
-        </div>
+        <ol className="space-y-3 list-decimal list-inside">
+          <li className="text-sm text-navy/80">Download your generated prenup from the Documents page</li>
+          <li className="text-sm text-navy/80">Print two copies for both partners to sign</li>
+          <li className="text-sm text-navy/80">Follow the state-specific signing instructions shown above</li>
+          <li className="text-sm text-navy/80">Have the agreement notarized if required by your state</li>
+        </ol>
       </Card>
     </div>
   );

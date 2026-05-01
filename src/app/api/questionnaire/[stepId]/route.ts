@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { users, questionnaireAnswers, payments } from "@/lib/db/schema";
+import { users, questionnaireAnswers, couples, payments } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -150,6 +150,22 @@ export async function PUT(
         updatedAt: new Date(),
       },
     });
+
+  // Sync state + wedding date to the couples table so downstream
+  // systems (document generation, state engine) can read them.
+  if (stepId === "introduction" && user.coupleId) {
+    const ans = answers as Record<string, unknown>;
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (typeof ans.state_of_residence === "string" && ans.state_of_residence) {
+      updates.stateCode = ans.state_of_residence;
+    }
+    if (typeof ans.wedding_date === "string" && ans.wedding_date) {
+      updates.weddingDate = ans.wedding_date;
+    }
+    if (Object.keys(updates).length > 1) {
+      await db.update(couples).set(updates).where(eq(couples.id, user.coupleId));
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

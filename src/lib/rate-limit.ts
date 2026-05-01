@@ -104,13 +104,16 @@ export function createRateLimiter(options: RateLimiterOptions) {
 
 /**
  * Extract a client identifier from a Request for rate-limiting purposes.
- * Prefers x-forwarded-for (set by reverse proxies), falls back to "unknown".
+ * Checks x-forwarded-for (standard proxy header) and x-real-ip (Vercel).
  */
 export function getClientIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
-    // x-forwarded-for can contain multiple IPs; take the first (client IP)
     return forwarded.split(",")[0].trim();
   }
-  return "unknown";
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp.trim();
+  }
+  return "anonymous";
 }

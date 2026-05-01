@@ -32,6 +32,7 @@ export default function PropertyPage() {
     setFieldErrors({});
     try {
       await saveNow();
+      await fetch("/api/questionnaire/property/complete", { method: "POST" });
     } catch {
       return;
     }

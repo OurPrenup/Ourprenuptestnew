@@ -10,12 +10,10 @@ import {
   AlertCircle,
   CheckCircle,
   Square,
-  CheckSquare,
   Download,
   Loader2,
   RefreshCw,
 } from "lucide-react";
-import { useProgress } from "@/lib/ProgressContext";
 import { usePaymentStatus } from "@/lib/hooks/usePaymentStatus";
 import ValidationPanel from "@/components/portal/ValidationPanel";
 
@@ -86,55 +84,22 @@ const features = [
 ];
 
 // ---------------------------------------------------------------------------
-// Requirements checklist config
-// ---------------------------------------------------------------------------
-
-const REQUIRED_STEPS = [
-  "introduction",
-  "property",
-  "debts",
-  "financial",
-  "spousal-support",
-  "legal-representation",
-  "optional-clauses",
-  "additional-documents",
-];
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export default function DocumentsPage() {
-  const { completedSteps } = useProgress();
   const { hasPrenup: hasPaid, isLoading: paymentLoading } = usePaymentStatus();
   const [docs, setDocs] = useState<GeneratedDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check which requirements are met
-  const questionnaireComplete = REQUIRED_STEPS.every((s) =>
-    completedSteps.has(s)
-  );
-  const financialDisclosureComplete =
-    completedSteps.has("financial-disclosure");
-
   const requirements = [
-    {
-      label: "Prenup package purchased",
-      met: hasPaid,
-    },
-    {
-      label: "Questionnaire completed (both partners)",
-      met: questionnaireComplete,
-    },
-    {
-      label: "Financial disclosure completed",
-      met: financialDisclosureComplete,
-    },
+    "Prenup package purchased",
+    "Questionnaire completed (both partners)",
+    "Financial disclosure completed (both partners)",
+    "All conflicts resolved",
   ];
-
-  const allRequirementsMet = requirements.every((r) => r.met);
   const hasDocuments = docs.length > 0;
 
   // Fetch existing documents
@@ -385,30 +350,20 @@ export default function DocumentsPage() {
               Ready to generate?
             </h2>
             <p className="text-sm text-text-secondary mb-4">
-              Complete the following requirements before generating your prenup:
+              Make sure the following are done before generating your prenup:
             </p>
             <div className="space-y-3">
               {requirements.map((req) => (
-                <div key={req.label} className="flex items-center gap-3">
-                  {req.met ? (
-                    <CheckSquare className="w-4 h-4 text-green-600 shrink-0" />
-                  ) : (
-                    <Square className="w-4 h-4 text-text-secondary/40 shrink-0" />
-                  )}
-                  <span
-                    className={`text-sm ${
-                      req.met ? "text-navy" : "text-navy/70"
-                    }`}
-                  >
-                    {req.label}
-                  </span>
+                <div key={req} className="flex items-center gap-3">
+                  <Square className="w-4 h-4 text-text-secondary/40 shrink-0" />
+                  <span className="text-sm text-navy/70">{req}</span>
                 </div>
               ))}
             </div>
             <div className="mt-6">
               <Button
                 variant="primary"
-                disabled={!allRequirementsMet || generating}
+                disabled={generating || paymentLoading}
                 onClick={handleGenerate}
               >
                 {generating ? (
@@ -420,6 +375,9 @@ export default function DocumentsPage() {
                   "Generate Prenup"
                 )}
               </Button>
+              <p className="text-xs text-text-secondary mt-2">
+                We&apos;ll check all requirements and let you know if anything is missing.
+              </p>
             </div>
           </Card>
         </>

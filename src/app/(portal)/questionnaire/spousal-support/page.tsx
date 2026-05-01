@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { spousalSupportQuestions } from "@/lib/questionnaire/spousal-support";
@@ -13,6 +14,7 @@ import { useQuestionnaireStep } from "@/lib/hooks/useQuestionnaireStep";
 import SaveIndicator from "@/components/portal/SaveIndicator";
 import QuestionnaireLoading from "@/components/portal/QuestionnaireLoading";
 import { usePaymentStatus } from "@/lib/hooks/usePaymentStatus";
+import { validateStep, type FieldErrors } from "@/lib/validation/questionnaire-schemas";
 
 export default function SpousalSupportPage() {
   const { answers, updateAnswer, isLoading, isSaving, saveError, saveNow } =
@@ -21,10 +23,20 @@ export default function SpousalSupportPage() {
   const { completeStep } = useProgress();
   const { hasPrenup: hasPaid } = usePaymentStatus();
   const router = useRouter();
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const handleNext = async () => {
+    if (!spousalSupportDisabled && hasPaid) {
+      const { valid, errors } = validateStep("spousal-support", answers);
+      if (!valid) {
+        setFieldErrors(errors);
+        return;
+      }
+      setFieldErrors({});
+    }
     try {
       await saveNow();
+      await fetch("/api/questionnaire/spousal-support/complete", { method: "POST" });
     } catch {
       return;
     }
@@ -116,7 +128,11 @@ export default function SpousalSupportPage() {
               key={q.id}
               question={q}
               value={answers[q.id] || (q.type === "multi-select" ? [] : "")}
-              onChange={(val) => updateAnswer(q.id, val)}
+              onChange={(val) => {
+                updateAnswer(q.id, val);
+                if (fieldErrors[q.id]) setFieldErrors((prev) => { const next = { ...prev }; delete next[q.id]; return next; });
+              }}
+              error={fieldErrors[q.id]}
             />
           ))}
         </div>

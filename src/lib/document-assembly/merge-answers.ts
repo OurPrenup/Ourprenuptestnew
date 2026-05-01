@@ -47,22 +47,17 @@ export function extractPartyInfo(
   partnerNumber: 1 | 2,
   isOwnAnswers = true,
 ): PartyInfo {
-  const firstName = str(answers, "introduction", "first_name");
-  const lastName = str(answers, "introduction", "last_name");
+  // When reading a party's OWN answers, first_name/last_name are theirs.
+  // When reading from the OTHER partner's answers (isOwnAnswers=false),
+  // we can't get this party's name from the questionnaire — use placeholders.
+  const firstName = isOwnAnswers ? str(answers, "introduction", "first_name") : "";
+  const lastName = isOwnAnswers ? str(answers, "introduction", "last_name") : "";
 
-  // Employment fields always use partner_one_*/partner_two_* prefixes in the
-  // questionnaire, regardless of whose answers we're reading.
-  let employedKey: string;
-  let employerKey: string;
-  let businessKey: string;
-  let attorneyKey: string;
-
-  // The questionnaire always stores employment fields with partner_one_/partner_two_ prefixes,
-  // regardless of whether the answers come from the user's own form or from the other partner.
-  employedKey = partnerNumber === 1 ? "partner_one_employed" : "partner_two_employed";
-  employerKey = partnerNumber === 1 ? "partner_one_employer" : "partner_two_employer";
-  businessKey = isOwnAnswers ? "own_business" : (partnerNumber === 1 ? "partner_one_business" : "partner_two_business");
-  attorneyKey = isOwnAnswers ? "has_attorney" : (partnerNumber === 1 ? "partner1_attorney" : "partner2_attorney");
+  const employedKey = partnerNumber === 1 ? "partner_one_employed" : "partner_two_employed";
+  const employerKey = partnerNumber === 1 ? "partner_one_employer" : "partner_two_employer";
+  // "own_business" is the only business question ID in the questionnaire
+  const businessKey = "own_business";
+  const attorneyKey = partnerNumber === 1 ? "partner1_attorney" : "partner2_attorney";
 
   const employedValue = str(answers, "property", employedKey);
 
@@ -148,10 +143,20 @@ export function extractDisclosure(
 ): FinancialDisclosureSummary | null {
   if (!rawData) return null;
 
+  // The financial disclosure page saves as:
+  //   { categories: { accounts: { items: [...], expanded }, ... }, incomeData: [...] }
+  // Handle both the nested format and a hypothetical flat format for resilience.
+  const categories = (rawData.categories ?? rawData) as Record<string, unknown>;
+
   const result: Record<string, DisclosureItem[]> = {};
 
   for (const category of DISCLOSURE_CATEGORIES) {
-    const items = rawData[category];
+    const catData = categories[category];
+    // Nested format: { items: [...], expanded: bool }
+    const items = catData && typeof catData === "object" && !Array.isArray(catData)
+      ? (catData as Record<string, unknown>).items
+      : catData;
+
     if (Array.isArray(items)) {
       result[category] = items
         .filter((item: Record<string, unknown>) => item.description || item.value)
@@ -165,7 +170,18 @@ export function extractDisclosure(
     }
   }
 
-  // Convert snake_case keys to camelCase for the type
+  // Income is stored separately as incomeData: [{ year, amount, owner }]
+  const incomeData = rawData.incomeData;
+  if (Array.isArray(incomeData) && incomeData.length > 0) {
+    result.income = incomeData
+      .filter((row: Record<string, unknown>) => row.amount)
+      .map((row: Record<string, unknown>) => ({
+        description: `${row.year ?? "Unknown year"} gross income`,
+        value: String(row.amount || ""),
+        owner: String(row.owner || ""),
+      }));
+  }
+
   return {
     accounts: result.accounts,
     assets: result.assets,

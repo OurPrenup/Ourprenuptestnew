@@ -133,7 +133,7 @@ function PartyExhibit({
         <DisclosureTable
           key={key}
           category={label}
-          items={disclosure[key]}
+          items={disclosure[key] ?? []}
         />
       ))}
 

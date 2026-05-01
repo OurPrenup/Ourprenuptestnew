@@ -18,6 +18,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { assembleDocument } from "@/lib/document-assembly/assemble";
 import type { StateCode } from "@/legal/types";
+import { isStateAvailable, getUnavailableReason } from "@/legal/state-availability";
 import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 // 3 document generations per 10 minutes per IP — CPU-heavy operation
@@ -79,6 +80,13 @@ export async function POST(req: Request) {
   if (!couple.stateCode) {
     return NextResponse.json(
       { error: "State not selected. Complete the questionnaire first." },
+      { status: 400 }
+    );
+  }
+
+  if (!isStateAvailable(couple.stateCode as StateCode)) {
+    return NextResponse.json(
+      { error: getUnavailableReason(couple.stateCode as StateCode) ?? "This state is not yet supported." },
       { status: 400 }
     );
   }
@@ -179,6 +187,36 @@ export async function POST(req: Request) {
   if (unresolvedConflict) {
     return NextResponse.json(
       { error: "There are unresolved disagreements between you and your partner. Please resolve all conflicts before generating documents." },
+      { status: 400 }
+    );
+  }
+
+  // ── Gate 5: Both partners must have completed financial disclosures ──
+  const [primaryDisclosureCheck] = await db
+    .select({ completedAt: financialDisclosures.completedAt })
+    .from(financialDisclosures)
+    .where(
+      and(
+        eq(financialDisclosures.userId, couple.primaryUserId),
+        eq(financialDisclosures.coupleId, couple.id)
+      )
+    )
+    .limit(1);
+
+  const [partnerDisclosureCheck] = await db
+    .select({ completedAt: financialDisclosures.completedAt })
+    .from(financialDisclosures)
+    .where(
+      and(
+        eq(financialDisclosures.userId, couple.partnerUserId),
+        eq(financialDisclosures.coupleId, couple.id)
+      )
+    )
+    .limit(1);
+
+  if (!primaryDisclosureCheck?.completedAt || !partnerDisclosureCheck?.completedAt) {
+    return NextResponse.json(
+      { error: "Both partners must complete their financial disclosure before generating documents." },
       { status: 400 }
     );
   }

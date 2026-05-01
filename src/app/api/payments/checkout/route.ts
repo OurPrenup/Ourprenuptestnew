@@ -5,6 +5,8 @@ import { eq, and, inArray, sql, isNull } from "drizzle-orm";
 import { getStripe, PRODUCTS, type ProductType } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+import type { StateCode } from "@/legal/types";
+import { isStateAvailable, getUnavailableReason } from "@/legal/state-availability";
 
 // 10 checkout attempts per 15 minutes per IP — prevents Stripe API abuse
 const checkoutLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 10 });
@@ -51,6 +53,22 @@ export async function POST(req: Request) {
 
   const product = PRODUCTS[productType as ProductType];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  // For prenup purchases, verify the couple's state is available
+  if (productType === "prenup") {
+    const [couple] = await db
+      .select({ stateCode: couples.stateCode })
+      .from(couples)
+      .where(eq(couples.id, user.coupleId!))
+      .limit(1);
+
+    if (couple?.stateCode && !isStateAvailable(couple.stateCode as StateCode)) {
+      return NextResponse.json(
+        { error: getUnavailableReason(couple.stateCode as StateCode) ?? "This state is not yet supported." },
+        { status: 400 }
+      );
+    }
+  }
 
   // Use a transaction to atomically check for existing payments and create a new one.
   // This prevents double-charging when two requests arrive at the same time.
