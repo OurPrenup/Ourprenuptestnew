@@ -196,7 +196,7 @@ export async function GET() {
         partnerAnswer: partVal ?? null,
         resolvedAnswer: stored?.resolvedAnswer ?? null,
         resolvedBy: stored?.resolvedBy ?? null,
-        status: stored?.resolvedAnswer !== null ? "resolved" : "unresolved",
+        status: stored?.resolvedAnswer != null ? "resolved" : "unresolved",
       });
     }
   }
@@ -260,6 +260,19 @@ export async function POST() {
     partnerByStep[row.stepId] = row.answers as Record<string, unknown>;
   }
 
+  // Load existing conflicts so we can check if answers actually changed
+  const storedConflicts = await db
+    .select()
+    .from(collaborationConflicts)
+    .where(eq(collaborationConflicts.coupleId, couple.id));
+
+  const storedMap = new Map(
+    storedConflicts.map((c) => [
+      `${c.stepId}:${c.questionId}`,
+      { primaryAnswer: c.primaryAnswer, partnerAnswer: c.partnerAnswer },
+    ])
+  );
+
   // Diff and upsert
   const allStepIds = new Set([
     ...Object.keys(primaryByStep),
@@ -289,9 +302,15 @@ export async function POST() {
       if (deepEqual(pVal, partVal)) continue;
 
       // Upsert: insert if new, update answers if changed.
-      // When answers change, clear any existing resolution so the couple
-      // must re-resolve based on the new answers. A resolution agreed upon
-      // for old answers is no longer valid.
+      // Only clear the resolution if the underlying answers actually changed —
+      // otherwise visiting the collaboration page would wipe all resolutions.
+      const existingKey = `${stepId}:${questionId}`;
+      const existing = storedMap.get(existingKey);
+      const answersChanged =
+        !existing ||
+        !deepEqual(existing.primaryAnswer, pVal ?? null) ||
+        !deepEqual(existing.partnerAnswer, partVal ?? null);
+
       await db
         .insert(collaborationConflicts)
         .values({
@@ -310,8 +329,10 @@ export async function POST() {
           set: {
             primaryAnswer: pVal ?? null,
             partnerAnswer: partVal ?? null,
-            resolvedAnswer: null,
-            resolvedBy: null,
+            // Only wipe the resolution if the answers themselves changed
+            ...(answersChanged
+              ? { resolvedAnswer: null, resolvedBy: null }
+              : {}),
             updatedAt: new Date(),
           },
         });

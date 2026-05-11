@@ -38,10 +38,10 @@ export const IA_CONFIG: StateLegalConfig = {
 
   financialDisclosure: {
     strictness: "standard",
-    waiverPermitted: true,
+    waiverPermitted: false,
     specialRequirements: null,
     notes:
-      "Standard UPAA financial disclosure required. Disclosure waiver is permitted under Iowa's UPAA adoption.",
+      "Iowa omitted the UPAA's written-waiver safe harbor for financial disclosure. Unlike most UPAA states, there is no way to waive disclosure via a written statement. Fair and reasonable disclosure is mandatory, and adequate knowledge of the other party's finances is required.",
   },
 
   independentCounsel: {

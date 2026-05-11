@@ -200,11 +200,9 @@ export default function InvitePage() {
                 <Mail className="w-4 h-4 mr-2" />
                 Resend Invite
               </Button>
-              <Link href="/dashboard">
-                <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={() => window.location.href = "/dashboard"}>
                   Back to Dashboard
                 </Button>
-              </Link>
             </div>
           </div>
         </Card>

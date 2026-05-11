@@ -41,12 +41,12 @@ export const MN_CONFIG: StateLegalConfig = {
   },
 
   waitingPeriod: {
-    hasMandatoryPeriod: true,
-    type: "mandatory",
+    hasMandatoryPeriod: false,
+    type: "recommended",
     details:
-      "Must be signed at least 7 days BEFORE the wedding ceremony. If signed within the 7-day window, the agreement is PRESUMED not valid. Different from California: Minnesota measures from the wedding date, California measures from the final draft.",
-    daysRequired: 7,
-    calculationBasis: "before_wedding",
+      "No statutory waiting period measured in days. Minn. Stat. § 519.11 requires execution 'before the day of solemnization of the marriage' — i.e., before the wedding day, but no specific number of days. The 7-day rule is California's, not Minnesota's. Best practice: sign well in advance to demonstrate voluntariness.",
+    daysRequired: null,
+    calculationBasis: null,
   },
 
   spousalSupport: {
@@ -75,11 +75,11 @@ export const MN_CONFIG: StateLegalConfig = {
 
   uniqueRules: [
     {
-      ruleId: "mn-7-day-pre-wedding",
+      ruleId: "mn-before-wedding-day",
       description:
-        "Must be signed at least 7 days before the wedding ceremony (August 2024 amendments). If signed within the 7-day window, the agreement is presumed not valid. Different from California's 7-day rule which measures from the final draft.",
+        "Must be executed before the day of solemnization of the marriage (Minn. Stat. § 519.11). There is no statutory number-of-days waiting period — the 7-day rule is California's, not Minnesota's. However, signing well in advance strengthens voluntariness.",
       platformImpact:
-        "Enforce a 7-day pre-wedding timer. Calculate based on the wedding date, not the final draft date. Block signing within 7 days of the ceremony. Display clear countdown.",
+        "Instruct users to sign before the wedding day. Recommend signing well in advance (30+ days) for strongest enforceability. Do NOT enforce a 7-day timer — that is California's rule.",
       severity: "critical",
     },
     {
@@ -109,7 +109,7 @@ export const MN_CONFIG: StateLegalConfig = {
     {
       ruleId: "mn-2024-amendments",
       description:
-        "Major amendments effective August 1, 2024 added the 7-day pre-wedding requirement, valuation basis disclosure, meaningful counsel opportunity, dual-time unconscionability review, inclusive terminology, and confirmed marriage as adequate consideration.",
+        "Major amendments effective August 1, 2024 added valuation basis disclosure, meaningful counsel opportunity, dual-time unconscionability review, inclusive terminology, and confirmed marriage as adequate consideration. Note: the 'before the day of solemnization' timing rule predates these amendments.",
       platformImpact:
         "All Minnesota agreements must comply with post-August 2024 requirements. Use inclusive terminology as required by the amendments.",
       severity: "important",
@@ -140,7 +140,7 @@ export const MN_CONFIG: StateLegalConfig = {
   platformNotes: {
     selfServiceViability: "moderate",
     requiredPlatformActions: [
-      "Enforce 7-day pre-wedding signing timer based on wedding date.",
+      "Instruct users to sign before the wedding day (no specific day count required).",
       "Require 'basis for valuation' field for each disclosed asset.",
       "Generate signature blocks for 2 witnesses + 1 notary (notary separate from witnesses).",
       "Instruct: minimum 5 people at signing (2 parties + 2 witnesses + 1 notary).",
@@ -150,14 +150,14 @@ export const MN_CONFIG: StateLegalConfig = {
     ],
     warnings: [
       "Complex requirements after August 2024 amendments.",
-      "Signing within 7 days of the wedding creates a presumption of invalidity.",
+      "Agreement must be executed before the wedding day per § 519.11.",
       "Notary cannot serve as a witness — 5 people minimum at signing.",
       "Disclosure must include basis for valuations, not just values.",
       "Dual-time review: agreement must be fair at both execution and enforcement.",
     ],
     marketingNotes: [
       "Moderate self-service viability due to complex execution and disclosure requirements.",
-      "Emphasize the importance of starting early (7-day pre-wedding rule).",
+      "Emphasize the importance of starting early (must sign before wedding day).",
       "Valuation basis requirement adds thoroughness that strengthens enforceability.",
     ],
   },

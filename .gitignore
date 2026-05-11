@@ -41,3 +41,10 @@ next-env.d.ts
 
 # claude
 .claude/
+
+# design handoff / scratch folders (not part of the app)
+/_latest_handoff/
+/_landing_review/
+/test_extract/
+landing-page.html
+*.zip

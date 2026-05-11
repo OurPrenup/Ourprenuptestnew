@@ -25,7 +25,7 @@ export const CA_CONFIG: StateLegalConfig = {
   execution: {
     writingRequired: true,
     bothSignatures: true,
-    notarization: "required",
+    notarization: "recommended",
     notarizationType: "standard",
     witnesses: "not_required",
     witnessCount: null,
@@ -135,11 +135,12 @@ export const CA_CONFIG: StateLegalConfig = {
       severity: "informational",
     },
     {
-      ruleId: "ca-notarization-required",
-      description: "Notarization is required for California prenuptial agreements.",
+      ruleId: "ca-notarization-recommended",
+      description:
+        "Notarization is not required by CA Family Code §§ 1611/1615 for prenup validity (only writing + signatures are required). However, notarization is strongly recommended as best practice to prevent authenticity disputes.",
       platformImpact:
-        "Must include notarization step in the execution workflow.",
-      severity: "critical",
+        "Recommend notarization in the execution workflow but do not present it as a statutory requirement.",
+      severity: "important",
     },
   ],
 
@@ -168,7 +169,7 @@ export const CA_CONFIG: StateLegalConfig = {
       "Detect spousal support modifications and require independent counsel for both parties.",
       "Generate separate written waiver of counsel document when attorney is not retained.",
       "Include fiduciary duty acknowledgment in every agreement.",
-      "Require notarization in the execution workflow.",
+      "Recommend notarization in the execution workflow (not statutorily required but best practice).",
       "Include community property clauses and separate property designations.",
       "Track draft versions to restart 7-day clock on substantive changes.",
     ],

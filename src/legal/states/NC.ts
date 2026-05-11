@@ -62,12 +62,13 @@ export const NC_CONFIG: StateLegalConfig = {
     canModify: true,
     disabled: false,
     disabledReason: null,
-    safetyValve: "dependent_spouse",
+    safetyValve: "public_assistance",
     specialRules: [
-      "Court must first find that a party qualifies as a 'dependent spouse' under G.S. 50-16.1A before overriding a spousal support waiver.",
+      "§ 52B-7(b): court can override a spousal support waiver when it causes a party to be eligible for public assistance.",
+      "Court must also find the party qualifies as a 'dependent spouse' under G.S. 50-16.1A and that requirements of G.S. 50-16.2A (postseparation support) or G.S. 50-16.3A (alimony) have been met.",
     ],
     notes:
-      "Spousal support can be modified. Dependent spouse safety valve applies — court must find party qualifies as a dependent spouse before overriding a waiver.",
+      "Spousal support can be modified. Primary trigger is public assistance eligibility (§ 52B-7(b)), with additional requirement that the party qualifies as a dependent spouse under G.S. 50-16.1A.",
   },
 
   unconscionability: {
@@ -83,11 +84,11 @@ export const NC_CONFIG: StateLegalConfig = {
 
   uniqueRules: [
     {
-      ruleId: "nc-dependent-spouse-threshold",
+      ruleId: "nc-public-assistance-plus-dependent-spouse",
       description:
-        "Before overriding a spousal support waiver, the court must first determine that the party qualifies as a 'dependent spouse' under G.S. 50-16.1A.",
+        "§ 52B-7(b): court can override a spousal support waiver when it causes eligibility for public assistance. Additionally, the court must find the party is a 'dependent spouse' under G.S. 50-16.1A. This is a dual requirement — public assistance trigger plus dependent spouse finding.",
       platformImpact:
-        "Include dependent spouse acknowledgment language. Explain the threshold requirement in user-facing materials.",
+        "Include public assistance safety valve language. Explain the dual requirement in user-facing materials.",
       severity: "important",
     },
     {
@@ -135,7 +136,7 @@ export const NC_CONFIG: StateLegalConfig = {
     ],
     warnings: [
       "Unconscionable agreements can still be enforced if disclosure was proper — disclosure is paramount.",
-      "Dependent spouse threshold must be met before court overrides spousal support waiver.",
+      "Public assistance eligibility plus dependent spouse threshold must be met before court overrides spousal support waiver.",
       "North Carolina requires 1-year separation before divorce.",
     ],
     marketingNotes: [

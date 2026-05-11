@@ -45,9 +45,9 @@ export const NJ_CONFIG: StateLegalConfig = {
   },
 
   independentCounsel: {
-    requirement: "recommended",
+    requirement: "opportunity_required",
     conditions:
-      "Explicit waiver required if declining independent counsel.",
+      "N.J.S.A. § 37:2-38: an unrepresented party must voluntarily and expressly waive, in writing, the opportunity to consult with independent legal counsel. Without that written waiver, the agreement is presumptively unconscionable.",
     writtenWaiverRequired: true,
   },
 

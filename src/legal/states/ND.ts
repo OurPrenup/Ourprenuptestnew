@@ -32,8 +32,9 @@ export const ND_CONFIG: StateLegalConfig = {
   },
 
   independentCounsel: {
-    requirement: "recommended",
-    conditions: null,
+    requirement: "opportunity_required",
+    conditions:
+      "UPMAA requires access to independent legal counsel. If a party is unrepresented, the agreement must include a statutory notice of rights and plain-language explanation of waived rights. Without counsel or the statutory notice, enforceability is undermined.",
     writtenWaiverRequired: false,
   },
 

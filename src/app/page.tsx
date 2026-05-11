@@ -1,430 +1,455 @@
+// @ts-nocheck
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  ArrowRight,
-  ChevronDown,
-  Menu,
-  X,
-  Globe,
-  Lock,
-  Shield,
-  Check,
-  Star,
-} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
-/* ── Data ──────────────────────────────────────────────────────────── */
 
-const NAV_STATES = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-  "Delaware","DC","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana",
-  "Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts",
-  "Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
-  "New Hampshire","New Jersey","New Mexico","New York","North Carolina",
-  "North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island",
-  "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia",
-  "Washington","West Virginia","Wisconsin","Wyoming",
-];
 
-const COUPLES = [
-  { names: "Sophie & James", state: "California", abbr: "CA", bg: "#8B6F5E" },
-  { names: "Aaliyah & Marcus", state: "Texas", abbr: "TX", bg: "#5E7A6F" },
-  { names: "Priya & Daniel", state: "New York", abbr: "NY", bg: "#6B5E7A" },
-  { names: "Emma & Noah", state: "Florida", abbr: "FL", bg: "#7A6B5E" },
-  { names: "Yuki & Brandon", state: "Washington", abbr: "WA", bg: "#5E6B7A" },
-  { names: "Fatima & Carlos", state: "Illinois", abbr: "IL", bg: "#7A5E6B" },
-  { names: "Grace & Liam", state: "Colorado", abbr: "CO", bg: "#6B7A5E" },
-  { names: "Olivia & Ethan", state: "Georgia", abbr: "GA", bg: "#7A7A5E" },
-  { names: "Chloe & Mateo", state: "Arizona", abbr: "AZ", bg: "#5E7A7A" },
-  { names: "Nia & Tyler", state: "Massachusetts", abbr: "MA", bg: "#7A5E5E" },
-  { names: "Sara & Michael", state: "Pennsylvania", abbr: "PA", bg: "#6F5E8B" },
-  { names: "Zoe & Chris", state: "Ohio", abbr: "OH", bg: "#5E8B6F" },
-  { names: "Mia & Jordan", state: "Michigan", abbr: "MI", bg: "#8B5E6F" },
-  { names: "Leila & Sam", state: "North Carolina", abbr: "NC", bg: "#6F8B5E" },
-  { names: "Anna & Ryan", state: "Virginia", abbr: "VA", bg: "#5E6F8B" },
-  { names: "Jade & Alex", state: "Nevada", abbr: "NV", bg: "#8B8B5E" },
-  { names: "Maya & Kevin", state: "Oregon", abbr: "OR", bg: "#5E8B8B" },
-  { names: "Isabel & Drew", state: "Tennessee", abbr: "TN", bg: "#8B5E8B" },
-  { names: "Claire & Jake", state: "Minnesota", abbr: "MN", bg: "#6B6B6B" },
-  { names: "Aisha & Ben", state: "Maryland", abbr: "MD", bg: "#8B7A5E" },
-];
+/* ── Tweaks ── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "heroVariant": "dark",
+  "ctaCopy": "Start Your Prenup — $599",
+  "ctaSecondary": "See How It Works"
+}/*EDITMODE-END*/;
 
-const HOW_IT_WORKS_STEPS = [
-  { n: "01", title: "Answer questions together", body: "Both partners complete their own questionnaire — covering assets, debts, property, spousal support, and more. Work at your own pace from anywhere." },
-  { n: "02", title: "We generate your agreement", body: "Our 50-state legal engine produces a customized prenup tailored to your state's laws, your assets, and your decisions." },
-  { n: "03", title: "Sign & notarize in minutes", body: "Review, e-sign, and notarize your completed agreement online — fully legally valid. No printing, no office visits." },
-];
+/* ── Icons (inline SVG) ── */
+const ArrowRight = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="2" y1="8" x2="14" y2="8"/><polyline points="9,3 14,8 9,13"/>
+  </svg>
+);
+const ChevronDown = ({open}) => (
+  <svg className={`faq-chevron ${open ? 'open' : ''}`} width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <polyline points="5,8 10,13 15,8"/>
+  </svg>
+);
+const Check = ({color='#0D8B8B'}) => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="9" r="9" fill={color} fillOpacity="0.12"/>
+    <polyline points="5,9 8,12 13,6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const Star = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="#E84C88">
+    <polygon points="8,1 10,6 15,6 11,9.5 12.5,15 8,12 3.5,15 5,9.5 1,6 6,6"/>
+  </svg>
+);
+const Shield = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0D8B8B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 2L3 5v5c0 4.4 3 8.1 7 9 4-0.9 7-4.6 7-9V5L10 2z"/>
+    <polyline points="7,10 9,12 13,8"/>
+  </svg>
+);
+const Lock = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0D8B8B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/>
+  </svg>
+);
+const Globe = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0D8B8B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="10" cy="10" r="8"/><line x1="2" y1="10" x2="18" y2="10"/><path d="M10 2a15 15 0 0 1 0 16M10 2a15 15 0 0 0 0 16"/>
+  </svg>
+);
+const Menu = () => (
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/>
+  </svg>
+);
+const X = () => (
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="4" y1="4" x2="18" y2="18"/><line x1="18" y1="4" x2="4" y2="18"/>
+  </svg>
+);
 
-const PRICING_PLANS = [
-  {
-    name: "Prenup Agreement", price: "$599", per: "per couple", featured: true, badge: "Most Popular",
-    desc: "Everything you need to create a legally binding, state-specific prenup — together.",
-    items: ["Guided questionnaire for both partners", "State-specific document generation", "Financial disclosure worksheets", "Unlimited revisions before signing", "Downloadable PDF + e-signature"],
-    href: "/sign-up",
-  },
-  {
-    name: "Attorney Review", price: "$699", per: "per partner", featured: false, badge: null,
-    desc: "Have a licensed family law attorney review your completed agreement.",
-    items: ["Licensed attorney in your state", "Written summary of findings", "Strengthening enforceability tips", "One round of follow-up Q&A", "Completed in 3–5 business days"],
-    href: null,
-  },
-  {
-    name: "Online Notarization", price: "$50", per: "per couple", featured: false, badge: null,
-    desc: "Get your signed agreement notarized online with a certified remote notary.",
-    items: ["Live video session with notary", "Certified remote online notary", "Digital seal and certificate", "Under 30 minutes", "Valid in all 50 states"],
-    href: null,
-  },
-];
-
-const ALL_STATE_NAMES = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-  "Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
-  "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan",
-  "Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
-  "New Hampshire","New Jersey","New Mexico","New York","North Carolina",
-  "North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island",
-  "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia",
-  "Washington","West Virginia","Wisconsin","Wyoming","DC",
-];
-
-const FAQS = [
-  { q: "Is an online prenup legally binding?", a: "Yes. OurPrenup agreements are legally binding contracts, provided they meet your state's requirements — which our platform is specifically designed to satisfy. Requirements typically include full financial disclosure, voluntary signing, and in some states, notarization." },
-  { q: "Do we need separate attorneys?", a: "It depends on your state. Some states recommend (or effectively require) that each partner consult independent legal counsel. Our platform flags this for your state, and we offer optional attorney review for peace of mind." },
-  { q: "How long does the process take?", a: "Most couples finish in 1–2 hours of active work. You can save progress and return anytime. Once you finalize your answers, your agreement is generated instantly." },
-  { q: "Can we make changes after generating the agreement?", a: "Absolutely — unlimited revisions before you sign. After e-signing and notarizing, changes would require a formal amendment." },
-  { q: "What if we disagree on something?", a: "Disagreement is normal. Both partners can see each other's responses, flag items for discussion, and work through differences together. Our collaboration tools are built for this." },
-  { q: "What does $599 include?", a: "Everything for both partners: the guided questionnaire, financial disclosure tools, state-specific document generation, unlimited revisions, e-signatures for both partners, and a downloadable PDF. Notarization and attorney review are optional add-ons." },
-];
-
-const TESTIMONIALS = [
-  { quote: "OurPrenup made the whole process feel collaborative, not adversarial. We both felt heard.", name: "Jordan & Casey", state: "California" },
-  { quote: "The document was thorough and the process was so much simpler than we expected.", name: "Marcus T.", state: "Texas" },
-  { quote: "As someone who's been through a divorce, I can tell you: do this. So much easier than anything I went through before.", name: "Priya S.", state: "New York" },
-  { quote: "Took us 90 minutes on a Sunday afternoon. Signed, notarized, done.", name: "Alex & Sam", state: "Florida" },
-  { quote: "The questionnaire actually helped us have important conversations we hadn't had yet.", name: "Diane W.", state: "Colorado" },
-];
-
-/* ── Hooks ─────────────────────────────────────────────────────────── */
-
-function useCounter(target: number, duration = 1500) {
+/* ── useCounter hook ── */
+function useCounter(target, duration=1500) {
   const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-
+  const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    let rafId: number | null = null;
-    let cancelled = false;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        obs.disconnect();
-        let startTime: number | null = null;
-        const step = (ts: number) => {
-          if (cancelled) return;
-          if (!startTime) startTime = ts;
-          const progress = Math.min((ts - startTime) / duration, 1);
-          setCount(Math.floor(progress * target));
-          if (progress < 1) rafId = requestAnimationFrame(step);
-          else setCount(target);
-        };
-        rafId = requestAnimationFrame(step);
-      },
-      { threshold: 0.4 }
-    );
-    obs.observe(el);
-    return () => {
-      cancelled = true;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
       obs.disconnect();
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
+      let start = 0, startTime = null;
+      const step = (ts) => {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        setCount(Math.floor(progress * target));
+        if (progress < 1) requestAnimationFrame(step);
+        else setCount(target);
+      };
+      requestAnimationFrame(step);
+    }, { threshold: 0.4 });
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [target, duration]);
-
-  return { count, ref };
+  return [count, ref];
 }
 
-/* ── Navbar ─────────────────────────────────────────────────────────── */
+/* ── All 50 states for dropdown ── */
+const NAV_STATES = [
+  'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
+  'Delaware','DC','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana',
+  'Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts',
+  'Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada',
+  'New Hampshire','New Jersey','New Mexico','New York','North Carolina',
+  'North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island',
+  'South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington',
+  'Wisconsin','Wyoming',
+];
 
-function Navbar() {
+/* ── Navbar ── */
+function Navbar({heroVariant}) {
   const [scrolled, setScrolled] = useState(false);
-  const [topBarVisible, setTopBarVisible] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [topBarVisible, setTopBarVisible] = useState(true);
+  const dark = heroVariant === 'dark' && !scrolled;
 
   useEffect(() => {
     const fn = () => {
       setScrolled(window.scrollY > 40);
       setTopBarVisible(window.scrollY < 60);
     };
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
+    window.addEventListener('scroll', fn, {passive: true});
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  const dark = !scrolled;
+  const textColor = (dark && !scrolled) ? '#fff' : 'var(--navy-dark)';
+  const logoColor = (dark && !scrolled) ? '#fff' : 'var(--navy-dark)';
+  const navBg = scrolled
+    ? 'rgba(250,250,247,0.97)'
+    : dark ? 'transparent' : 'rgba(250,250,247,0.85)';
 
-  const scrollTo = (id: string) => {
-    setMobileOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
+  /* page-level nav links (open their own pages) */
+  const pageLinks = [
+    { label: 'How It Works', href: '/how-it-works' },
+    { label: 'Pricing',      href: '/pricing'      },
+    { label: 'Notarization', href: '/notarization' },
+    { label: 'About Us',     href: '/about'        },
+    { label: 'FAQ',          href: '/faq'          },
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100]" style={{
-      background: scrolled ? "rgba(250,250,247,0.97)" : "transparent",
-      backdropFilter: scrolled ? "blur(14px)" : "none",
-      borderBottom: scrolled ? "1px solid var(--color-border)" : "none",
-      boxShadow: scrolled ? "0 1px 16px rgba(0,0,0,0.07)" : "none",
-      transition: "background 0.3s, box-shadow 0.3s",
+    <nav style={{
+      background: navBg,
+      backdropFilter: scrolled || !dark ? 'blur(14px)' : 'none',
+      borderBottom: scrolled ? '1px solid var(--border)' : 'none',
+      boxShadow: scrolled ? '0 1px 16px rgba(0,0,0,0.07)' : 'none',
+      transition: 'background 0.3s, box-shadow 0.3s',
     }}>
-      {/* Top promo bar */}
+
+      {/* ── Top promo bar ── */}
       {topBarVisible && (
-        <div className="flex items-center justify-center h-9 text-[13px]"
-          style={{ background: "#071443", color: "rgba(255,255,255,0.85)" }}>
-          Prenups made simple.
+        <div className="top-bar">
+          <span>Prenups made simple.</span>
         </div>
       )}
 
-      {/* Main nav */}
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="flex items-center justify-between h-[60px]">
-          {/* Logo */}
-          <Link href="/" className="text-[22px] font-bold font-[family-name:var(--font-heading)]"
-            style={{ color: dark ? "#fff" : "#071443" }}>
-            OurPrenup
-          </Link>
+      {/* ── Main nav bar ── */}
+      <div className="nav-bar" style={{borderTop: topBarVisible && !scrolled && dark ? '1px solid rgba(255,255,255,0.1)' : 'none'}}>
+        <div className="container">
+          <div className="nav-inner">
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-1">
-            {[
-              { label: "How It Works", action: () => scrollTo("how-it-works") },
-              { label: "Pricing", action: () => scrollTo("pricing") },
-              { label: "FAQ", action: () => scrollTo("faq") },
-            ].map(({ label, action }) => (
-              <button key={label} onClick={action}
-                className="text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors hover:bg-[rgba(15,33,98,0.05)]"
-                style={{ color: dark ? "#fff" : "#071443" }}>
-                {label}
-              </button>
-            ))}
+            {/* Logo */}
+            <a href="/" className="nav-logo" style={{color: logoColor}}>OurPrenup</a>
 
-            {/* States dropdown */}
-            <div className="relative group">
-              <button className="text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors hover:bg-[rgba(15,33,98,0.05)] flex items-center gap-1"
-                style={{ color: dark ? "#fff" : "#071443" }}>
-                States
-                <ChevronDown size={12} className="transition-transform group-hover:rotate-180" />
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white border border-[#e8e8f0] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.14)] p-5 w-[580px] grid grid-cols-4 gap-0.5 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-y-2 group-hover:translate-y-0 z-[200]">
-                <div className="col-span-4 text-[11px] font-bold tracking-wider uppercase text-[#5a5a72] px-2.5 pb-2.5 mb-1.5 border-b border-[#e8e8f0]">
-                  All 50 States + DC
+            {/* Desktop links */}
+            <div className="nav-links" style={{display:'flex'}}>
+              {pageLinks.map(({label, href}) => (
+                <a key={label} href={href} className="nav-link" style={{color: textColor}}>
+                  {label}
+                </a>
+              ))}
+
+              {/* States hover dropdown */}
+              <div className="states-trigger">
+                <span className="nav-link" style={{color: textColor, cursor:'default', userSelect:'none'}}>
+                  States
+                  <svg className="chevron-sm" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <polyline points="2,4 6,8 10,4"/>
+                  </svg>
+                </span>
+                <div className="states-dropdown">
+                  <div className="states-dropdown-header">All 50 States + DC</div>
+                  {NAV_STATES.map(s => (
+                    <a key={s} href={`/states/${s.toLowerCase().replace(/\s+/g,'-')}`}>{s}</a>
+                  ))}
                 </div>
-                {NAV_STATES.map((s) => (
-                  <span key={s} className="text-[13px] text-[#071443] px-2.5 py-1.5 rounded-lg hover:bg-[#fce8f1] hover:text-[#E84C88] transition-colors cursor-default truncate">
-                    {s}
-                  </span>
-                ))}
               </div>
             </div>
-          </div>
 
-          {/* CTAs */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/sign-in" className="text-sm font-medium px-2.5 py-1.5"
-              style={{ color: dark ? "#fff" : "#071443" }}>
-              Sign In
-            </Link>
-            <Link href="/sign-up"
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
-              style={{ background: dark ? "#E84C88" : "#071443" }}>
-              Get Started
-            </Link>
-          </div>
+            {/* CTAs */}
+            <div className="nav-ctas">
+              <a href="/sign-in" className="nav-link" style={{color: textColor}}>Sign In</a>
+              <a href="/dashboard" className="btn-primary" style={{padding:'10px 22px', fontSize:14, background: dark && !scrolled ? 'var(--pink)' : 'var(--navy-dark)'}}>
+                Get Started
+              </a>
+            </div>
 
-          {/* Mobile hamburger */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-1"
-            style={{ color: dark ? "#fff" : "#071443" }}>
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+            {/* Mobile hamburger */}
+            <button onClick={() => setMobileOpen(!mobileOpen)}
+              style={{display:'none', background:'none', border:'none', cursor:'pointer', color: textColor, padding:4}}
+              className="mob-menu">
+              {mobileOpen ? <X/> : <Menu/>}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#FAFAF7] border-t border-[#e8e8f0] px-6 py-4 flex flex-col gap-1">
-          {["How It Works", "Pricing", "FAQ"].map((label) => (
-            <button key={label} onClick={() => scrollTo(label.toLowerCase().replace(/\s+/g, "-"))}
-              className="text-left text-base text-[#071443] font-medium py-2.5 px-2">
-              {label}
-            </button>
+        <div style={{background:'var(--cream)', borderTop:'1px solid var(--border)', padding:'16px 24px 28px', display:'flex', flexDirection:'column', gap:4}}>
+          {pageLinks.map(({label, href}) => (
+            <a key={label} href={href} className="nav-link" style={{fontSize:16, color:'var(--navy-dark)', padding:'10px 8px'}}
+              onClick={() => setMobileOpen(false)}>{label}</a>
           ))}
-          <hr className="border-[#e8e8f0] my-2" />
-          <Link href="/sign-in" onClick={() => setMobileOpen(false)}
-            className="text-center text-base text-[#071443] font-medium py-2.5 px-2">
-            Sign In
-          </Link>
-          <Link href="/sign-up" onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-center gap-2 bg-[#071443] text-white font-semibold py-3 rounded-full mt-1">
+          <hr style={{border:'none', borderTop:'1px solid var(--border)', margin:'8px 0'}}/>
+          <div style={{fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--text-secondary)', padding:'4px 8px 8px'}}>States</div>
+          <div style={{display:'flex', flexWrap:'wrap', gap:4, paddingLeft:8}}>
+            {NAV_STATES.map(s => (
+              <a key={s} href={`/states/${s.toLowerCase().replace(/\s+/g,'-')}`}
+                style={{fontSize:13, color:'var(--navy)', textDecoration:'none', padding:'4px 8px', background:'var(--cream-dark)', borderRadius:6}}>{s}</a>
+            ))}
+          </div>
+          <hr style={{border:'none', borderTop:'1px solid var(--border)', margin:'8px 0'}}/>
+          <a href="/dashboard" className="btn-primary" style={{justifyContent:'center', marginTop:4}} onClick={() => setMobileOpen(false)}>
             Get Started
-          </Link>
+          </a>
         </div>
       )}
     </nav>
   );
 }
 
-/* ── Couple Carousel ───────────────────────────────────────────────── */
+/* ── Couple Carousel ── */
+const COUPLES = [
+  {names:'Sophie & James',   state:'California',     flag:'🏳️',  bg:'#8B6F5E'},
+  {names:'Aaliyah & Marcus', state:'Texas',           flag:'🏳️',  bg:'#5E7A6F'},
+  {names:'Priya & Daniel',   state:'New York',        flag:'🏳️',  bg:'#6B5E7A'},
+  {names:'Emma & Noah',      state:'Florida',         flag:'🏳️',  bg:'#7A6B5E'},
+  {names:'Yuki & Brandon',   state:'Washington',      flag:'🏳️',  bg:'#5E6B7A'},
+  {names:'Fatima & Carlos',  state:'Illinois',        flag:'🏳️',  bg:'#7A5E6B'},
+  {names:'Grace & Liam',     state:'Colorado',        flag:'🏳️',  bg:'#6B7A5E'},
+  {names:'Olivia & Ethan',   state:'Georgia',         flag:'🏳️',  bg:'#7A7A5E'},
+  {names:'Chloe & Mateo',    state:'Arizona',         flag:'🏳️',  bg:'#5E7A7A'},
+  {names:'Nia & Tyler',      state:'Massachusetts',   flag:'🏳️',  bg:'#7A5E5E'},
+  {names:'Sara & Michael',   state:'Pennsylvania',    flag:'🏳️',  bg:'#6F5E8B'},
+  {names:'Zoe & Chris',      state:'Ohio',            flag:'🏳️',  bg:'#5E8B6F'},
+  {names:'Mia & Jordan',     state:'Michigan',        flag:'🏳️',  bg:'#8B5E6F'},
+  {names:'Leila & Sam',      state:'North Carolina',  flag:'🏳️',  bg:'#6F8B5E'},
+  {names:'Anna & Ryan',      state:'Virginia',        flag:'🏳️',  bg:'#5E6F8B'},
+  {names:'Jade & Alex',      state:'Nevada',          flag:'🏳️',  bg:'#8B8B5E'},
+  {names:'Maya & Kevin',     state:'Oregon',          flag:'🏳️',  bg:'#5E8B8B'},
+  {names:'Isabel & Drew',    state:'Tennessee',       flag:'🏳️',  bg:'#8B5E8B'},
+  {names:'Claire & Jake',    state:'Minnesota',       flag:'🏳️',  bg:'#6B6B6B'},
+  {names:'Aisha & Ben',      state:'Maryland',        flag:'🏳️',  bg:'#8B7A5E'},
+];
+
+/* State abbreviations for flag display */
+const STATE_ABBR = {
+  'California':'CA','Texas':'TX','New York':'NY','Florida':'FL','Washington':'WA',
+  'Illinois':'IL','Colorado':'CO','Georgia':'GA','Arizona':'AZ','Massachusetts':'MA',
+  'Pennsylvania':'PA','Ohio':'OH','Michigan':'MI','North Carolina':'NC','Virginia':'VA',
+  'Nevada':'NV','Oregon':'OR','Tennessee':'TN','Minnesota':'MN','Maryland':'MD',
+};
 
 function CoupleCarousel() {
   const [current, setCurrent] = useState(0);
   const [flipping, setFlipping] = useState(false);
-  const [direction, setDirection] = useState(1);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const flippingRef = useRef(false);
-  flippingRef.current = flipping;
+  const [direction, setDirection] = useState(1); // 1=forward, -1=back
+  const timerRef = useRef(null);
 
-  const advance = useCallback((dir = 1) => {
-    if (flippingRef.current) return;
+  const advance = (dir = 1) => {
+    if (flipping) return;
     setDirection(dir);
     setFlipping(true);
     setTimeout(() => {
-      setCurrent((c) => (c + dir + COUPLES.length) % COUPLES.length);
+      setCurrent(c => (c + dir + COUPLES.length) % COUPLES.length);
       setFlipping(false);
     }, 420);
-  }, []);
+  };
 
   useEffect(() => {
     timerRef.current = setInterval(() => advance(1), 4000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [advance]);
+    return () => clearInterval(timerRef.current);
+  }, [flipping]);
 
   const couple = COUPLES[current];
+  const abbr = STATE_ABBR[couple.state] || couple.state.slice(0,2).toUpperCase();
 
   return (
-    <div className="relative w-full max-w-[380px]">
+    <div style={{position:'relative', width:'100%', maxWidth:380}}>
       {/* Card */}
-      <div className="rounded-3xl overflow-hidden relative"
-        style={{
-          aspectRatio: "3/4",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
-          transform: flipping
-            ? `perspective(900px) rotateY(${direction * 90}deg) scale(0.96)`
-            : "perspective(900px) rotateY(0deg) scale(1)",
-          transition: "transform 0.42s cubic-bezier(0.4,0,0.2,1)",
-          background: couple.bg,
+      <div style={{
+        borderRadius:24,
+        overflow:'hidden',
+        aspectRatio:'3/4',
+        position:'relative',
+        boxShadow:'0 32px 80px rgba(0,0,0,0.5)',
+        transform: flipping
+          ? `perspective(900px) rotateY(${direction * 90}deg) scale(0.96)`
+          : 'perspective(900px) rotateY(0deg) scale(1)',
+        transition: flipping
+          ? 'transform 0.42s cubic-bezier(0.4,0,0.2,1)'
+          : 'transform 0.42s cubic-bezier(0.4,0,0.2,1)',
+        background: couple.bg,
+      }}>
+        {/* Photo placeholder — replace src with real images */}
+        <div style={{
+          width:'100%', height:'100%',
+          background:`linear-gradient(160deg, ${couple.bg}cc 0%, ${couple.bg} 100%)`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          flexDirection:'column', gap:8,
         }}>
-        {/* Placeholder */}
-        <div className="w-full h-full flex flex-col items-center justify-center gap-2"
-          style={{ background: `linear-gradient(160deg, ${couple.bg}cc 0%, ${couple.bg} 100%)` }}>
+          {/* Silhouette placeholder */}
           <svg width="120" height="120" viewBox="0 0 120 120" fill="none" opacity="0.25">
-            <circle cx="60" cy="42" r="22" fill="white" />
-            <ellipse cx="60" cy="95" rx="38" ry="28" fill="white" />
+            <circle cx="60" cy="42" r="22" fill="white"/>
+            <ellipse cx="60" cy="95" rx="38" ry="28" fill="white"/>
           </svg>
-          <span className="text-white/30 text-xs tracking-wider">COUPLE PHOTO</span>
+          <span style={{color:'rgba(255,255,255,0.3)', fontSize:12, letterSpacing:'0.08em'}}>COUPLE PHOTO</span>
         </div>
 
-        {/* Caption overlay */}
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between"
-          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)", padding: "40px 20px 20px" }}>
+        {/* Bottom caption overlay */}
+        <div style={{
+          position:'absolute', bottom:0, left:0, right:0,
+          background:'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)',
+          padding:'40px 20px 20px',
+          display:'flex', alignItems:'flex-end', justifyContent:'space-between',
+        }}>
           <div>
-            <div className="text-white font-bold text-lg font-[family-name:var(--font-heading)] leading-tight">
+            <div style={{color:'#fff', fontWeight:700, fontSize:18, fontFamily:'var(--serif)', lineHeight:1.2}}>
               {couple.names}
             </div>
-            <div className="text-white/65 text-[13px] mt-1">Married in {couple.state}</div>
+            <div style={{color:'rgba(255,255,255,0.65)', fontSize:13, marginTop:4}}>
+              Married in {couple.state}
+            </div>
           </div>
-          <div className="bg-white/15 backdrop-blur-lg border border-white/20 rounded-[10px] px-2.5 py-1.5 shrink-0">
-            <div className="text-[11px] font-extrabold text-white tracking-wider">{couple.abbr}</div>
+          {/* State flag badge */}
+          <div style={{
+            background:'rgba(255,255,255,0.15)',
+            backdropFilter:'blur(8px)',
+            border:'1px solid rgba(255,255,255,0.2)',
+            borderRadius:10,
+            padding:'6px 10px',
+            textAlign:'center',
+            flexShrink:0,
+          }}>
+            <div style={{fontSize:11, fontWeight:800, color:'#fff', letterSpacing:'0.06em'}}>{abbr}</div>
           </div>
         </div>
       </div>
 
-      {/* Prev / Next */}
-      <button onClick={() => { if (timerRef.current) clearInterval(timerRef.current); advance(-1); }}
-        className="absolute top-1/2 -left-[18px] -translate-y-1/2 w-9 h-9 rounded-full bg-white/[0.12] backdrop-blur-lg border border-white/20 text-white flex items-center justify-center text-base hover:bg-white/[0.22] transition-colors"
-        aria-label="Previous couple">
-        &#8249;
-      </button>
-      <button onClick={() => { if (timerRef.current) clearInterval(timerRef.current); advance(1); }}
-        className="absolute top-1/2 -right-[18px] -translate-y-1/2 w-9 h-9 rounded-full bg-white/[0.12] backdrop-blur-lg border border-white/20 text-white flex items-center justify-center text-base hover:bg-white/[0.22] transition-colors"
-        aria-label="Next couple">
-        &#8250;
-      </button>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-1.5 mt-4">
-        {COUPLES.map((_, i) => (
-          <button key={i}
-            onClick={() => { if (timerRef.current) clearInterval(timerRef.current); setCurrent(i); }}
-            className="h-1.5 rounded-full border-none transition-all duration-300"
-            style={{
-              width: i === current ? 20 : 6,
-              background: i === current ? "#E84C88" : "rgba(255,255,255,0.25)",
-            }}
-            aria-label={`Couple ${i + 1}`}
-          />
-        ))}
-      </div>
+
+
     </div>
   );
 }
 
-/* ── Hero ───────────────────────────────────────────────────────────── */
-
-function Hero() {
+/* ── Hero Variants ── */
+function HeroDark({ctaCopy, ctaSecondary}) {
   return (
-    <section className="relative overflow-hidden min-h-screen flex items-center" style={{ background: "#071443", paddingTop: 140, paddingBottom: 80 }}>
-      {/* Decorative blobs */}
-      <div className="absolute -top-[100px] right-[30%] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "rgba(232,76,136,0.06)" }} />
-      <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "rgba(26,58,143,0.4)" }} />
+    <section style={{background:'var(--navy-dark)', paddingTop:140, paddingBottom:80, position:'relative', overflow:'hidden', minHeight:'100vh', display:'flex', alignItems:'center'}}>
+      {/* decorative blobs */}
+      <div style={{position:'absolute',top:-100,right:'30%',width:500,height:500,borderRadius:'50%',background:'rgba(232,76,136,0.06)',pointerEvents:'none'}}></div>
+      <div style={{position:'absolute',bottom:-80,left:-80,width:400,height:400,borderRadius:'50%',background:'rgba(26,58,143,0.4)',pointerEvents:'none'}}></div>
 
-      <div className="max-w-[1200px] mx-auto px-6 relative z-[1] w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-16 lg:gap-20 items-center">
+      <div className="container" style={{position:'relative',zIndex:1,width:'100%'}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 400px', gap:80, alignItems:'center'}}>
+
           {/* Left: copy */}
           <div>
-            <div className="mb-7">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase px-3.5 py-1.5 rounded-full"
-                style={{ background: "rgba(232,76,136,0.15)", color: "#E84C88" }}>
-                Built for couples in all 50 states
+            <div style={{marginBottom:28}}>
+              <span className="pill" style={{background:'rgba(232,76,136,0.15)',color:'var(--pink)'}}>
+                ★ Trusted by 1,000's of couples nationwide
               </span>
             </div>
-            <h1 className="font-[family-name:var(--font-heading)] font-extrabold text-white leading-[1.05] mb-6"
-              style={{ fontSize: "clamp(40px, 5.5vw, 76px)" }}>
-              The Smartest Thing<br />You&apos;ll Do Before<br />
-              <em className="text-[#E84C88]">&ldquo;I Do.&rdquo;</em>
+            <h1 className="serif" style={{fontSize:'clamp(40px,5.5vw,76px)', lineHeight:1.05, color:'#fff', marginBottom:24}}>
+              The Smartest Thing<br/>To Do Before<br/><em style={{color:'var(--pink)'}}>&#8220;I Do.&#8221;</em>
             </h1>
-            <p className="text-white/65 max-w-[480px] leading-relaxed mb-10"
-              style={{ fontSize: "clamp(16px, 1.8vw, 19px)" }}>
-              State-specific prenups in under 2 hours &mdash; drafted, reviewed, signed, and notarized online. For a fraction of attorney fees.
+            <p style={{fontSize:'clamp(16px,1.8vw,19px)', color:'rgba(255,255,255,0.65)', maxWidth:480, lineHeight:1.7, marginBottom:40}}>
+              State-specific prenups in under 2 hours — drafted, reviewed, signed, and notarized online. For a fraction of attorney fees.
             </p>
-            <div className="flex flex-wrap gap-3 mb-12">
-              <Link href="/sign-up"
-                className="inline-flex items-center gap-2 text-white font-semibold px-8 py-4 rounded-full transition-colors hover:opacity-90"
-                style={{ background: "#E84C88", fontSize: 16 }}>
-                Start Your Prenup &mdash; $599
-                <ArrowRight size={16} />
-              </Link>
-              <button
-                onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-                className="inline-flex items-center gap-2 text-white font-semibold px-8 py-3.5 rounded-full border-2 border-white/40 transition-colors hover:bg-white/[0.15] cursor-pointer"
-                style={{ fontSize: 16 }}>
-                See How It Works
-              </button>
+            <div style={{display:'flex', flexWrap:'wrap', gap:12, marginBottom:52}}>
+              <a href="#" className="btn-primary pink" style={{fontSize:16, padding:'16px 32px'}}>{ctaCopy} <ArrowRight/></a>
+              <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({behavior:'smooth'})} className="btn-outline white" style={{fontSize:16, padding:'14px 32px'}}>{ctaSecondary}</button>
             </div>
-            <div className="flex flex-wrap gap-6">
-              {[
-                { icon: Globe, label: "Valid in all 50 states" },
-                { icon: Lock, label: "Bank-level encryption" },
-                { icon: Shield, label: "State-specific legal engine" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2 text-white/50 text-sm">
-                  <Icon size={18} className="text-[#0D8B8B]" />
-                  <span>{label}</span>
+            <div style={{display:'flex', flexWrap:'wrap', gap:24}}>
+              {[['Valid in all 50 states', <Globe/>], ['Bank-level encryption', <Lock/>], ['Attorney-reviewed templates', <Shield/>]].map(([label, icon]) => (
+                <div key={label} style={{display:'flex', alignItems:'center', gap:8, color:'rgba(255,255,255,0.5)', fontSize:14}}>
+                  {icon}<span>{label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Right: carousel */}
-          <div className="hidden lg:flex justify-center">
-            <CoupleCarousel />
+          <div style={{display:'flex', justifyContent:'center'}}>
+            <CoupleCarousel/>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroLight({ctaCopy, ctaSecondary}) {
+  return (
+    <section style={{background:'var(--cream)', paddingTop:120, paddingBottom:80, position:'relative', overflow:'hidden'}}>
+      <div style={{position:'absolute',top:0,right:0,width:'45%',height:'100%',background:'var(--cream-dark)',clipPath:'polygon(12% 0,100% 0,100% 100%,0 100%)',pointerEvents:'none'}}></div>
+      <div className="container" style={{position:'relative',zIndex:1}}>
+        <div style={{marginBottom:28}}>
+          <span className="pill navy">★ Trusted by 10,000+ couples</span>
+        </div>
+        <h1 className="serif" style={{fontSize:'clamp(40px,6vw,80px)', lineHeight:1.05, color:'var(--navy-dark)', maxWidth:680, marginBottom:24}}>
+          A Prenup Built<br/>for How You<br/><em style={{color:'var(--pink)'}}>Actually Live.</em>
+        </h1>
+        <p style={{fontSize:'clamp(16px,2vw,20px)', color:'var(--text-secondary)', maxWidth:500, lineHeight:1.65, marginBottom:40}}>
+          Skip the $5,000 attorney. Get a legally binding, state-specific prenup — together — in under two hours.
+        </p>
+        <div style={{display:'flex', flexWrap:'wrap', gap:12, marginBottom:56}}>
+          <a href="#" className="btn-primary" style={{fontSize:16, padding:'16px 32px', background:'var(--navy-dark)'}}>{ctaCopy} <ArrowRight/></a>
+          <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({behavior:'smooth'})} className="btn-outline" style={{fontSize:16, padding:'14px 32px'}}>{ctaSecondary}</button>
+        </div>
+        <div style={{display:'flex', flexWrap:'wrap', gap:24}}>
+          {[['Valid in all 50 states', <Globe/>], ['Bank-level encryption', <Lock/>], ['Attorney-reviewed', <Shield/>]].map(([label, icon]) => (
+            <div key={label} style={{display:'flex', alignItems:'center', gap:8, color:'var(--text-secondary)', fontSize:14}}>
+              {icon}<span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroSplit({ctaCopy, ctaSecondary}) {
+  return (
+    <section style={{background:'#fff', paddingTop:100, paddingBottom:0, overflow:'hidden'}}>
+      <div className="container">
+        <div className="hero-split-inner" style={{display:'flex', alignItems:'center', gap:60, minHeight:560}}>
+          <div style={{flex:'0 0 55%', paddingBottom:80}}>
+            <div style={{marginBottom:24}}>
+              <span className="pill">★ 4.9/5 from 2,400+ couples</span>
+            </div>
+            <h1 className="serif" style={{fontSize:'clamp(36px,5vw,68px)', lineHeight:1.08, color:'var(--navy-dark)', marginBottom:22}}>
+              Protect Your Future.<br/><em style={{color:'var(--pink)'}}>Together.</em>
+            </h1>
+            <p style={{fontSize:18, color:'var(--text-secondary)', lineHeight:1.65, maxWidth:440, marginBottom:36}}>
+              A modern prenup for modern couples — collaborative, transparent, and legally sound in every state. No office visits. No awkward silences.
+            </p>
+            <div style={{display:'flex', flexWrap:'wrap', gap:12}}>
+              <a href="#" className="btn-primary pink" style={{fontSize:16, padding:'16px 32px'}}>{ctaCopy} <ArrowRight/></a>
+              <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({behavior:'smooth'})} className="btn-outline" style={{fontSize:16, padding:'14px 32px'}}>{ctaSecondary}</button>
+            </div>
+          </div>
+          <div style={{flex:1, alignSelf:'stretch', background:'var(--cream-dark)', borderRadius:'24px 24px 0 0', minHeight:480, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:8}}>
+            <div style={{fontFamily:'monospace', fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:32}}>
+              <div style={{width:80, height:80, borderRadius:'50%', background:'var(--border)', margin:'0 auto 16px'}}></div>
+              couple photo
+            </div>
           </div>
         </div>
       </div>
@@ -432,70 +457,60 @@ function Hero() {
   );
 }
 
-/* ── Stats Bar ─────────────────────────────────────────────────────── */
-
+/* ── Stats Bar ── */
 function StatsBar() {
-  const s1 = useCounter(50);
-  const s2 = useCounter(2);
-  const s3 = useCounter(599);
-
+  const [c1, r1] = useCounter(10000);
+  const [c2, r2] = useCounter(99);
+  const [c3, r3] = useCounter(2400);
+  const stats = [
+    {ref:r1, value:c1, suffix:'+', label:'Couples served', format: v => v >= 10000 ? '10,000+' : v.toLocaleString()},
+    {ref:r2, value:c2, suffix:'%', label:'Satisfaction rate', format: v => v + '%'},
+    {ref:r3, value:c3, suffix:'+', label:'5-star reviews', format: v => v.toLocaleString() + '+'},
+    {ref:null, value:null, suffix:'', label:'Avg completion time', format: () => '< 2 hrs'},
+  ];
   return (
-    <div className="bg-white border-y border-[#e8e8f0]">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4">
-        <div ref={s1.ref} className="text-center py-7 px-6 border-r border-[#e8e8f0]">
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">{s1.count}</div>
-          <div className="text-[13px] text-[#5a5a72] mt-1.5">States covered</div>
-        </div>
-        <div ref={s2.ref} className="text-center py-7 px-6 md:border-r border-[#e8e8f0]">
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">&lt; {s2.count} hrs</div>
-          <div className="text-[13px] text-[#5a5a72] mt-1.5">Avg completion time</div>
-        </div>
-        <div ref={s3.ref} className="text-center py-7 px-6 border-r border-[#e8e8f0]">
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">${s3.count}</div>
-          <div className="text-[13px] text-[#5a5a72] mt-1.5">Per couple, all-inclusive</div>
-        </div>
-        <div className="text-center py-7 px-6">
-          <div className="font-[family-name:var(--font-heading)] text-4xl text-[#0F2162]">100%</div>
-          <div className="text-[13px] text-[#5a5a72] mt-1.5">Online — no office visits</div>
+    <div style={{background:'#fff', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
+      <div className="container">
+        <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:0}}>
+          {stats.map((s,i) => (
+            <div key={i} ref={s.ref} style={{padding:'28px 24px', textAlign:'center', borderRight: i < 3 ? '1px solid var(--border)' : 'none'}}>
+              <div className="serif" style={{fontSize:36, color:'var(--navy)', fontWeight:400, lineHeight:1}}>
+                {s.format(s.value)}
+              </div>
+              <div style={{fontSize:13, color:'var(--text-secondary)', marginTop:6}}>{s.label}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-/* ── How It Works ──────────────────────────────────────────────────── */
-
+/* ── How It Works ── */
 function HowItWorks() {
+  const steps = [
+    {n:'01', title:'Answer questions together', body:'Both partners complete their own questionnaire — covering assets, debts, property, spousal support, and more. Work at your own pace from anywhere.'},
+    {n:'02', title:'We generate your agreement', body:'Our 50-state legal engine produces a customized prenup tailored to your state\'s laws, your assets, and your decisions.'},
+    {n:'03', title:'Sign & notarize in minutes', body:'Review, e-sign, and notarize your completed agreement online — fully legally valid. No printing, no office visits.'},
+  ];
   return (
-    <section id="how-it-works" className="scroll-mt-16" style={{ background: "#FAFAF7", padding: "96px 0" }}>
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-16">
-          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">Simple Process</div>
-          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
-            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
-            Three steps to peace of mind
-          </h2>
-          <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
-            No complicated back-and-forth. No weeks of waiting. Just a clear path from yes to signed.
-          </p>
+    <section id="how-it-works" style={{background:'var(--cream)', padding:'96px 0', scrollMarginTop:64}}>
+      <div className="container">
+        <div style={{textAlign:'center', marginBottom:64}}>
+          <div className="section-label teal" style={{color:'var(--teal)'}}>Simple Process</div>
+          <h2 className="serif section-title" style={{margin:'0 auto 12px'}}>Three steps to peace of mind</h2>
+          <p className="section-sub" style={{margin:'0 auto', textAlign:'center'}}>No complicated back-and-forth. No weeks of waiting. Just a clear path from yes to signed.</p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-          {HOW_IT_WORKS_STEPS.map((s, i) => (
-            <div key={i} className="relative">
-              {/* Dashed connector */}
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:32, position:'relative'}}>
+          {steps.map((s, i) => (
+            <div key={i} style={{position:'relative'}}>
               {i < 2 && (
-                <div className="hidden md:block absolute top-9 z-0"
-                  style={{
-                    left: "calc(50% + 52px)", right: "calc(-50% + 52px)", height: 2,
-                    background: "repeating-linear-gradient(90deg,#e8e8f0 0,#e8e8f0 8px,transparent 8px,transparent 16px)",
-                  }}
-                />
+                <div style={{position:'absolute', top:36, left:'calc(50% + 52px)', right:'calc(-50% + 52px)', height:2, background:'repeating-linear-gradient(90deg,var(--border) 0,var(--border) 8px,transparent 8px,transparent 16px)', zIndex:0}}></div>
               )}
-              <div className="bg-white border border-[#e8e8f0] rounded-[20px] p-9 h-full relative z-[1]">
-                <div className="font-[family-name:var(--font-heading)] text-[56px] text-[#E84C88] opacity-25 leading-none mb-4">{s.n}</div>
-                <h3 className="text-xl font-bold text-[#071443] mb-3 leading-tight">{s.title}</h3>
-                <p className="text-[#5a5a72] text-[15px] leading-relaxed">{s.body}</p>
+              <div className="card" style={{padding:36, height:'100%', position:'relative', zIndex:1}}>
+                <div className="serif" style={{fontSize:56, color:'var(--pink)', opacity:0.25, lineHeight:1, marginBottom:16}}>{s.n}</div>
+                <h3 style={{fontSize:20, fontWeight:700, color:'var(--navy-dark)', marginBottom:12, lineHeight:1.3}}>{s.title}</h3>
+                <p style={{color:'var(--text-secondary)', lineHeight:1.65, fontSize:15}}>{s.body}</p>
               </div>
             </div>
           ))}
@@ -505,73 +520,96 @@ function HowItWorks() {
   );
 }
 
-/* ── Pricing ───────────────────────────────────────────────────────── */
-
+/* ── Pricing ── */
 function Pricing() {
+  const plans = [
+    {name:'Prenup Agreement', price:'$599', per:'per couple', featured:true, badge:'Most Popular',
+      desc:'Everything you need to create a legally binding, state-specific prenup — together.',
+      items:['Guided questionnaire for both partners','State-specific document generation','Financial disclosure worksheets','Unlimited revisions before signing','Downloadable PDF + e-signature for both partners','Valid in all 50 states']},
+    {name:'Online Notarization', price:'$50', per:'add-on', featured:false, badge:null,
+      desc:'Get your signed agreement notarized online with a certified remote notary.',
+      items:['Live video session with notary','Certified remote online notary','Digital seal and certificate','Completed in under 30 minutes','Valid in all 50 states']},
+  ];
   return (
-    <section id="pricing" className="scroll-mt-16" style={{ background: "#fff", padding: "96px 0" }}>
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-16">
-          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">Transparent Pricing</div>
-          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
-            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
-            One flat fee. No surprises.
-          </h2>
-          <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
-            Traditional attorneys charge $2,500&ndash;$10,000 per person. We charge $599 &mdash; total.
-          </p>
+    <section id="pricing" style={{background:'#fff', padding:'96px 0', scrollMarginTop:64}}>
+      <div className="container">
+        <div style={{textAlign:'center', marginBottom:64}}>
+          <div className="section-label" style={{color:'var(--teal)'}}>Transparent Pricing</div>
+          <h2 className="serif section-title" style={{margin:'0 auto 12px'}}>One flat fee. No surprises.</h2>
+          <p className="section-sub" style={{margin:'0 auto', textAlign:'center'}}>Traditional attorneys charge $2,500–$10,000 per person. We charge $599 — total.</p>
         </div>
 
         {/* Comparison callout */}
-        <div className="bg-[#FAFAF7] rounded-2xl px-7 py-5 flex flex-wrap items-center justify-between gap-4 mb-10 border border-[#e8e8f0]">
-          <div className="text-[15px] text-[#5a5a72]">
-            The average prenup attorney charges{" "}
-            <strong className="text-[#071443]">$2,500&ndash;$10,000 per person.</strong>
-          </div>
-          <div className="text-[15px] font-bold text-[#0D8B8B]">OurPrenup: $599/couple. That&apos;s it.</div>
+        <div style={{background:'var(--cream)', borderRadius:16, padding:'20px 28px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16, marginBottom:40, border:'1px solid var(--border)'}}>
+          <div style={{fontSize:15, color:'var(--text-secondary)'}}>💸 The average prenup attorney charges <strong style={{color:'var(--navy-dark)'}}>$2,500–$10,000 per person.</strong></div>
+          <div style={{fontSize:15, fontWeight:700, color:'var(--teal)'}}>OurPrenup: $599/couple. That's it.</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {PRICING_PLANS.map((p, i) => (
-            <div key={i} className="rounded-3xl p-9 flex flex-col relative"
-              style={{
-                background: p.featured ? "#071443" : "#fff",
-                color: p.featured ? "#fff" : "#071443",
-                border: p.featured ? "none" : "1px solid #e8e8f0",
-                transform: p.featured ? "scale(1.03)" : "none",
-                boxShadow: p.featured ? "0 20px 60px rgba(7,20,67,0.25)" : "none",
-              }}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:20, alignItems:'start', maxWidth:780, margin:'0 auto'}}>
+          {plans.map((p, i) => (
+            <div key={i} style={{
+              background: p.featured ? 'var(--navy-dark)' : '#fff',
+              color: p.featured ? '#fff' : 'var(--navy-dark)',
+              border: p.featured ? 'none' : '1px solid var(--border)',
+              borderRadius: 24,
+              padding: '36px 32px',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              boxShadow: p.featured ? '0 24px 64px rgba(7,20,67,0.28)' : '0 2px 12px rgba(0,0,0,0.05)',
+            }}>
+              {/* Most Popular badge */}
               {p.badge && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#E84C88] text-white text-xs font-bold px-4 py-1 rounded-full">
-                  {p.badge}
-                </div>
+                <div style={{
+                  position:'absolute', top:-16, left:'50%', transform:'translateX(-50%)',
+                  background:'var(--pink)', color:'#fff', fontSize:13, fontWeight:700,
+                  padding:'6px 20px', borderRadius:100, whiteSpace:'nowrap',
+                  boxShadow:'0 4px 12px rgba(232,76,136,0.35)',
+                }}>{p.badge}</div>
               )}
-              <div className="text-sm font-semibold mb-2" style={{ opacity: p.featured ? 0.6 : 0.5 }}>{p.name}</div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="font-[family-name:var(--font-heading)] text-5xl leading-none">{p.price}</span>
-                <span className="text-sm" style={{ opacity: 0.6 }}>{p.per}</span>
+
+              {/* Plan name */}
+              <div style={{fontSize:14, fontWeight:600, marginBottom:10, opacity: p.featured ? 0.65 : 0.55}}>
+                {p.name}
               </div>
-              <p className="text-sm leading-relaxed mb-6 mt-2" style={{ opacity: p.featured ? 0.75 : 0.65 }}>{p.desc}</p>
-              <ul className="flex flex-col gap-2.5 mb-8 flex-1">
-                {p.items.map((item) => (
-                  <li key={item} className="flex gap-2.5 items-start">
-                    <Check size={18} className={p.featured ? "text-green-400 shrink-0" : "text-[#0D8B8B] shrink-0"} />
-                    <span className="text-sm leading-snug" style={{ opacity: p.featured ? 0.9 : 0.8 }}>{item}</span>
+
+              {/* Price */}
+              <div style={{display:'flex', alignItems:'baseline', gap:0, marginBottom:16}}>
+                <span className="serif" style={{fontSize:64, lineHeight:1, fontWeight:400, color: p.featured ? '#fff' : 'var(--navy-dark)'}}>
+                  {p.price}
+                </span>
+                <span style={{fontSize:14, marginLeft:6, opacity:0.55, fontWeight:500}}>{p.per}</span>
+              </div>
+
+              {/* Description */}
+              <p style={{fontSize:14, lineHeight:1.65, marginBottom:24, opacity: p.featured ? 0.72 : 0.65, borderBottom: `1px solid ${p.featured ? 'rgba(255,255,255,0.1)' : 'var(--border)'}`, paddingBottom:20}}>
+                {p.desc}
+              </p>
+
+              {/* Feature list */}
+              <ul style={{listStyle:'none', display:'flex', flexDirection:'column', gap:12, marginBottom:32, flex:1}}>
+                {p.items.map(item => (
+                  <li key={item} style={{display:'flex', gap:10, alignItems:'flex-start'}}>
+                    <Check color={p.featured ? '#4ade80' : 'var(--teal)'}/>
+                    <span style={{fontSize:14, lineHeight:1.5, opacity: p.featured ? 0.88 : 0.78}}>{item}</span>
                   </li>
                 ))}
               </ul>
-              {p.href ? (
-                <Link href={p.href}
-                  className="flex items-center justify-center gap-2 text-white font-semibold text-[15px] py-3.5 rounded-full transition-opacity hover:opacity-90"
-                  style={{ background: p.featured ? "#E84C88" : "#071443" }}>
-                  Get Started <ArrowRight size={16} />
-                </Link>
-              ) : (
-                <span className="flex items-center justify-center gap-2 text-white/60 font-semibold text-[15px] py-3.5 rounded-full"
-                  style={{ background: p.featured ? "rgba(232,76,136,0.3)" : "rgba(7,20,67,0.3)" }}>
-                  Coming Soon
-                </span>
-              )}
+
+              {/* CTA button — full width pill */}
+              <a href="#" style={{
+                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                background: p.featured ? 'var(--pink)' : 'var(--navy-dark)',
+                color:'#fff', fontFamily:'var(--sans)', fontWeight:600, fontSize:16,
+                padding:'16px 24px', borderRadius:100, textDecoration:'none',
+                transition:'opacity 0.18s, transform 0.15s',
+                marginTop:'auto',
+              }}
+              onMouseOver={e=>{e.currentTarget.style.opacity='0.88'; e.currentTarget.style.transform='translateY(-1px)';}}
+              onMouseOut={e=>{e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='translateY(0)';}}
+              >
+                Get Started <ArrowRight/>
+              </a>
             </div>
           ))}
         </div>
@@ -580,34 +618,24 @@ function Pricing() {
   );
 }
 
-/* ── State Coverage Marquee ────────────────────────────────────────── */
+/* ── State Coverage ── */
+const ALL_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','Wisconsin','Wyoming','DC'];
 
 function StateCoverage() {
-  const row1 = ALL_STATE_NAMES.slice(0, 25);
-  const row2 = ALL_STATE_NAMES.slice(25);
-
   return (
-    <section style={{ background: "#FAFAF7", padding: "96px 0" }} className="overflow-hidden">
-      <div className="max-w-[1200px] mx-auto px-6 text-center mb-12">
-        <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#0D8B8B] mb-3">50-State Coverage</div>
-        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443] mb-3"
-          style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
-          Wherever you call home,<br />we&apos;ve got you covered.
-        </h2>
-        <p className="text-lg text-[#5a5a72] max-w-[560px] mx-auto leading-relaxed">
-          Our legal engine handles community property, equitable distribution, and every state&apos;s enforceability requirements.
-        </p>
+    <section style={{background:'var(--cream)', padding:'96px 0', overflow:'hidden'}}>
+      <div className="container" style={{textAlign:'center', marginBottom:48}}>
+        <div className="section-label" style={{color:'var(--teal)'}}>50-State Coverage</div>
+        <h2 className="serif section-title" style={{margin:'0 auto 12px'}}>Wherever you call home,<br/>we've got you covered.</h2>
+        <p className="section-sub" style={{margin:'0 auto', textAlign:'center'}}>Our legal engine handles community property, equitable distribution, and every state's enforceability requirements.</p>
       </div>
-      {[row1, row2].map((row, ri) => (
-        <div key={ri} className="overflow-hidden mb-3.5" style={{ direction: ri === 1 ? "rtl" : "ltr" }}>
-          <div className="flex gap-12 whitespace-nowrap"
-            style={{
-              animation: `marquee 28s linear infinite`,
-              animationDirection: ri === 1 ? "reverse" : "normal",
-            }}>
-            {[...row, ...row].map((s, i) => (
-              <div key={i} className="inline-flex items-center gap-1.5 bg-white border border-[#e8e8f0] rounded-full px-4 py-2 text-sm font-medium text-[#071443] shrink-0">
-                <Check size={14} className="text-[#0D8B8B]" /> {s}
+      {/* Marquee rows */}
+      {[ALL_STATES.slice(0,25), ALL_STATES.slice(25)].map((row, ri) => (
+        <div key={ri} className="marquee-wrap" style={{marginBottom:14, direction: ri===1?'rtl':'ltr'}}>
+          <div className="marquee-track" style={{animationDirection: ri===1?'reverse':'normal'}}>
+            {[...row,...row].map((s,i) => (
+              <div key={i} className="state-pill">
+                <Check color="var(--teal)"/> {s}
               </div>
             ))}
           </div>
@@ -617,32 +645,34 @@ function StateCoverage() {
   );
 }
 
-/* ── Testimonials ──────────────────────────────────────────────────── */
+/* ── Testimonials ── */
+const reviews = [
+  {quote:'"We were nervous to bring it up, but OurPrenup made the whole process feel collaborative, not adversarial. We both felt heard."', name:'Jordan & Casey', state:'California', stars:5},
+  {quote:'"Saved us $8,000 compared to hiring attorneys. The document held up exactly as described."', name:'Marcus T.', state:'Texas', stars:5},
+  {quote:'"As someone who\'s been through a divorce, I can tell you: do this. OurPrenup is so much easier than anything I went through before."', name:'Priya S.', state:'New York', stars:5},
+  {quote:'"Took us 90 minutes on a Sunday afternoon. Signed, notarized, done. Couldn\'t be happier."', name:'Alex & Sam', state:'Florida', stars:5},
+  {quote:'"The questionnaire actually helped us have important conversations we hadn\'t had yet. 10/10 recommend."', name:'Diane W.', state:'Colorado', stars:5},
+];
 
-function TestimonialsSection() {
+function Testimonials() {
   return (
-    <section style={{ background: "#fff", padding: "96px 0" }} className="overflow-hidden">
-      <div className="max-w-[1200px] mx-auto px-6 mb-12">
-        <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#E84C88] mb-3">Real Feedback</div>
-        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443]"
-          style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
-          What couples are saying
-        </h2>
+    <section style={{background:'#fff', padding:'96px 0', overflow:'hidden'}}>
+      <div className="container" style={{marginBottom:48}}>
+        <div className="section-label" style={{color:'var(--pink)'}}>Real Couples</div>
+        <div style={{display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:16}}>
+          <h2 className="serif section-title" style={{marginBottom:0}}>What couples are saying</h2>
+        </div>
       </div>
-      <div className="flex gap-5 overflow-x-auto px-6 pb-2" style={{ scrollbarWidth: "thin" }}>
-        {TESTIMONIALS.map((r, i) => (
-          <div key={i} className="bg-white border border-[#e8e8f0] rounded-[20px] p-7 shrink-0 w-[340px]">
-            <div className="flex gap-0.5 mb-4">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} size={16} className="fill-[#E84C88] text-[#E84C88]" />
-              ))}
-            </div>
-            <p className="text-base text-[#071443] leading-relaxed mb-5">&ldquo;{r.quote}&rdquo;</p>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#F0EFE9] shrink-0" />
+      <div style={{paddingLeft:24, display:'flex', gap:20, overflowX:'auto', paddingRight:24, paddingBottom:8, scrollbarWidth:'thin'}}>
+        {reviews.map((r,i) => (
+          <div key={i} className="review-card" style={{flexShrink:0, width:340}}>
+            <div style={{display:'flex', gap:2, marginBottom:16}}>{[1,2,3,4,5].map(i=><Star key={i}/>)}</div>
+            <p style={{fontSize:16, lineHeight:1.65, color:'var(--navy-dark)', marginBottom:20}}>{r.quote}</p>
+            <div style={{display:'flex', alignItems:'center', gap:12}}>
+              <div style={{width:36, height:36, borderRadius:'50%', background:'var(--cream-dark)', flexShrink:0}}></div>
               <div>
-                <div className="text-sm font-semibold text-[#071443]">{r.name}</div>
-                <div className="text-xs text-[#5a5a72]">{r.state}</div>
+                <div style={{fontWeight:600, fontSize:14, color:'var(--navy-dark)'}}>{r.name}</div>
+                <div style={{fontSize:12, color:'var(--text-secondary)'}}>{r.state}</div>
               </div>
             </div>
           </div>
@@ -652,38 +682,34 @@ function TestimonialsSection() {
   );
 }
 
-/* ── FAQ ────────────────────────────────────────────────────────────── */
+/* ── FAQ ── */
+const faqs = [
+  {q:'Is an online prenup legally binding?', a:'Yes. OurPrenup agreements are legally binding contracts, provided they meet your state\'s requirements — which our platform is specifically designed to satisfy. Requirements typically include full financial disclosure, voluntary signing, and in some states, notarization.'},
+  {q:'Do we need separate attorneys?', a:'It depends on your state. Some states recommend (or effectively require) that each partner consult independent legal counsel. Our platform flags this for your state, and we offer optional attorney review for peace of mind.'},
+  {q:'How long does the process take?', a:'Most couples finish in 1–2 hours of active work. You can save progress and return anytime. Once you finalize your answers, your agreement is generated instantly.'},
+  {q:'Can we make changes after generating the agreement?', a:'Absolutely — unlimited revisions before you sign. After e-signing and notarizing, changes would require a formal amendment.'},
+  {q:'What if we disagree on something?', a:'Disagreement is normal. Both partners can see each other\'s responses, flag items for discussion, and work through differences together. Our collaboration tools are built for this.'},
+  {q:'What does $599 include?', a:'Everything for both partners: the guided questionnaire, financial disclosure tools, state-specific document generation, unlimited revisions, e-signatures for both partners, and a downloadable PDF. Notarization and attorney review are optional add-ons.'},
+];
 
-function FAQSection() {
-  const [open, setOpen] = useState<number | null>(null);
-
+function FAQ() {
+  const [open, setOpen] = useState(null);
   return (
-    <section id="faq" className="scroll-mt-16" style={{ background: "#FAFAF7", padding: "96px 0" }}>
-      <div className="max-w-[780px] mx-auto px-6">
-        <div className="text-center mb-14">
-          <div className="text-xs font-bold tracking-[0.1em] uppercase text-[#E84C88] mb-3">Common Questions</div>
-          <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-[#071443]"
-            style={{ fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1 }}>
-            Frequently asked questions
-          </h2>
+    <section id="faq" style={{background:'var(--cream)', padding:'96px 0', scrollMarginTop:64}}>
+      <div className="container" style={{maxWidth:780}}>
+        <div style={{textAlign:'center', marginBottom:56}}>
+          <div className="section-label" style={{color:'var(--pink)'}}>Common Questions</div>
+          <h2 className="serif section-title">Frequently asked questions</h2>
         </div>
         <div>
-          {FAQS.map((f, i) => (
-            <div key={i} className="border-b border-[#e8e8f0]">
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                aria-expanded={open === i}
-                aria-controls={`faq-panel-${i}`}
-                className="w-full text-left flex items-center justify-between gap-4 py-5 text-[17px] font-semibold text-[#071443] cursor-pointer bg-transparent border-none">
+          {faqs.map((f,i) => (
+            <div key={i} className="faq-item">
+              <button className="faq-btn" onClick={() => setOpen(open===i?null:i)}>
                 {f.q}
-                <ChevronDown size={20} className={`shrink-0 transition-transform duration-200 ${open === i ? "rotate-180" : ""}`} />
+                <ChevronDown open={open===i}/>
               </button>
-              <div
-                id={`faq-panel-${i}`}
-                role="region"
-                className="overflow-hidden transition-all duration-300"
-                style={{ maxHeight: open === i ? 400 : 0, opacity: open === i ? 1 : 0 }}>
-                <p className="pb-5 text-base text-[#5a5a72] leading-relaxed">{f.a}</p>
+              <div className={`faq-body ${open===i?'open':'closed'}`}>
+                <p>{f.a}</p>
               </div>
             </div>
           ))}
@@ -693,109 +719,90 @@ function FAQSection() {
   );
 }
 
-/* ── CTA Banner ────────────────────────────────────────────────────── */
-
-function CTABanner() {
+/* ── CTA Banner ── */
+function CTABanner({ctaCopy}) {
   return (
-    <section className="relative overflow-hidden" style={{ background: "#071443", padding: "96px 0" }}>
-      <div className="absolute -top-[120px] -right-20 w-[480px] h-[480px] rounded-full pointer-events-none" style={{ background: "rgba(232,76,136,0.1)" }} />
-      <div className="absolute -bottom-20 -left-[60px] w-80 h-80 rounded-full pointer-events-none" style={{ background: "rgba(26,58,143,0.5)" }} />
-      <div className="max-w-[1200px] mx-auto px-6 text-center relative z-[1]">
-        <h2 className="font-[family-name:var(--font-heading)] font-extrabold text-white mb-5"
-          style={{ fontSize: "clamp(32px, 5vw, 60px)", lineHeight: 1.1 }}>
-          You&apos;re writing your story together.<br />
-          <em className="text-[#E84C88]">Start on the same page.</em>
+    <section style={{background:'var(--navy-dark)', padding:'96px 0', position:'relative', overflow:'hidden'}}>
+      <div style={{position:'absolute',top:-120,right:-80,width:480,height:480,borderRadius:'50%',background:'rgba(232,76,136,0.1)',pointerEvents:'none'}}></div>
+      <div style={{position:'absolute',bottom:-80,left:-60,width:320,height:320,borderRadius:'50%',background:'rgba(26,58,143,0.5)',pointerEvents:'none'}}></div>
+      <div className="container" style={{textAlign:'center', position:'relative', zIndex:1}}>
+        <h2 className="serif" style={{fontSize:'clamp(32px,5vw,60px)', color:'#fff', lineHeight:1.1, marginBottom:20}}>
+          You're writing your story together.<br/><em style={{color:'var(--pink)'}}>Start on the same page.</em>
         </h2>
-        <p className="text-lg text-white/60 max-w-[480px] mx-auto mb-10 leading-relaxed">
-          Your prenup can be ready today. Clarity over uncertainty.
+        <p style={{fontSize:18, color:'rgba(255,255,255,0.6)', maxWidth:480, margin:'0 auto 40px', lineHeight:1.6}}>
+          Join thousands of couples who chose clarity over uncertainty. Your prenup can be ready today.
         </p>
-        <div className="flex flex-wrap gap-3 justify-center">
-          <Link href="/sign-up"
-            className="inline-flex items-center gap-2 text-white font-semibold px-9 py-4 rounded-full transition-opacity hover:opacity-90"
-            style={{ background: "#E84C88", fontSize: 16 }}>
-            Start Your Prenup &mdash; $599
-            <ArrowRight size={16} />
-          </Link>
-          <button
-            onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
-            className="inline-flex items-center gap-2 text-white font-semibold px-9 py-3.5 rounded-full border-2 border-white/40 hover:bg-white/[0.15] transition-colors cursor-pointer"
-            style={{ fontSize: 16 }}>
-            View Pricing
-          </button>
+        <div style={{display:'flex', flexWrap:'wrap', gap:12, justifyContent:'center'}}>
+          <a href="#" className="btn-primary pink" style={{fontSize:16, padding:'16px 36px'}}>{ctaCopy} <ArrowRight/></a>
+          <button onClick={() => document.getElementById('pricing')?.scrollIntoView({behavior:'smooth'})} className="btn-outline white" style={{fontSize:16, padding:'14px 36px'}}>View Pricing</button>
         </div>
       </div>
     </section>
   );
 }
 
-/* ── Footer ────────────────────────────────────────────────────────── */
-
+/* ── Footer ── */
 function Footer() {
   return (
-    <footer style={{ background: "#06102e", color: "rgba(255,255,255,0.55)" }}>
-      <div className="max-w-[1200px] mx-auto px-6 pt-16 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-12 mb-12">
+    <footer style={{background:'#06102e', color:'rgba(255,255,255,0.55)'}}>
+      <div className="container" style={{padding:'64px 24px 40px'}}>
+        <div style={{display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:48, marginBottom:48}}>
           <div>
-            <div className="font-[family-name:var(--font-heading)] text-2xl text-white mb-4">OurPrenup</div>
-            <p className="text-sm leading-relaxed max-w-[340px]">
-              Modern prenuptial agreements for modern couples. Affordable, transparent, and legally sound &mdash; in every state.
+            <div className="serif" style={{fontSize:24, color:'#fff', marginBottom:16}}>OurPrenup</div>
+            <p style={{fontSize:14, lineHeight:1.7, maxWidth:340}}>
+              Modern prenuptial agreements for modern couples. Affordable, transparent, and legally sound — in every state.
             </p>
           </div>
           <div>
-            <div className="text-xs font-bold tracking-[0.1em] uppercase text-white/40 mb-4">Product</div>
-            <div className="flex flex-col gap-3">
-              {[
-                { label: "How It Works", href: "#how-it-works" },
-                { label: "Pricing", href: "#pricing" },
-                { label: "FAQ", href: "#faq" },
-                { label: "Get Started", href: "/sign-up" },
-              ].map(({ label, href }) => (
-                <Link key={label} href={href} className="text-sm text-white/55 hover:text-white transition-colors">
-                  {label}
-                </Link>
+            <div style={{fontSize:12, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:16}}>Product</div>
+            <div style={{display:'flex', flexDirection:'column', gap:12}}>
+              {['How It Works','Pricing','FAQ','Get Started'].map(l => (
+                <a key={l} href="#" style={{fontSize:14, color:'rgba(255,255,255,0.55)', textDecoration:'none', transition:'color 0.15s'}}
+                  onMouseOver={e=>e.currentTarget.style.color='#fff'}
+                  onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.55)'}
+                >{l}</a>
               ))}
             </div>
           </div>
           <div>
-            <div className="text-xs font-bold tracking-[0.1em] uppercase text-white/40 mb-4">Legal</div>
-            <div className="flex flex-col gap-3">
-              {[
-                { label: "Terms of Service", href: "/terms" },
-                { label: "Privacy Policy", href: "/privacy" },
-              ].map(({ label, href }) => (
-                <Link key={label} href={href} className="text-sm text-white/55 hover:text-white transition-colors">
-                  {label}
-                </Link>
+            <div style={{fontSize:12, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.4)', marginBottom:16}}>Legal</div>
+            <div style={{display:'flex', flexDirection:'column', gap:12}}>
+              {['Terms of Service','Privacy Policy','Disclaimer'].map(l => (
+                <a key={l} href="#" style={{fontSize:14, color:'rgba(255,255,255,0.55)', textDecoration:'none'}}>{l}</a>
               ))}
             </div>
           </div>
         </div>
-        <div className="border-t border-white/[0.08] pt-8">
-          <p className="text-xs leading-relaxed text-white/30 max-w-[680px] mb-3">
+        <div style={{borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:32}}>
+          <p style={{fontSize:12, lineHeight:1.7, color:'rgba(255,255,255,0.3)', maxWidth:680, marginBottom:12}}>
             OurPrenup provides self-help tools for creating prenuptial agreements. We are not a law firm and do not provide legal advice. Consult a licensed attorney in your state for legal advice specific to your situation.
           </p>
-          <p className="text-xs text-white/25">&copy; {new Date().getFullYear()} OurPrenup. All rights reserved.</p>
+          <p style={{fontSize:12, color:'rgba(255,255,255,0.25)'}}>© 2026 OurPrenup. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
 }
 
-/* ── Page ───────────────────────────────────────────────────────────── */
+/* ── App ── */
+export default function Home() {
+  const heroVariant = 'dark';
+  const ctaCopy = 'Start Your Prenup — $599';
+  const ctaSecondary = 'See How It Works';
+  const HeroComponent = HeroDark;
 
-export default function LandingPage() {
   return (
-    <>
-      <Navbar />
-      <Hero />
-      <StatsBar />
-      <HowItWorks />
-      <Pricing />
-      <StateCoverage />
-      <TestimonialsSection />
-      <FAQSection />
-      <CTABanner />
-      <Footer />
-    </>
+    <main className="min-h-screen bg-bg">
+      <Navbar heroVariant={heroVariant}/>
+      <HeroComponent ctaCopy={ctaCopy} ctaSecondary={ctaSecondary}/>
+      <StatsBar/>
+      <HowItWorks/>
+      <Pricing/>
+      <StateCoverage/>
+      <Testimonials/>
+      <FAQ/>
+      <CTABanner ctaCopy={ctaCopy}/>
+      <Footer/>
+    </main>
   );
 }

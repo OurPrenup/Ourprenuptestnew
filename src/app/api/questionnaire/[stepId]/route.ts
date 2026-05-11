@@ -153,17 +153,26 @@ export async function PUT(
 
   // Sync state + wedding date to the couples table so downstream
   // systems (document generation, state engine) can read them.
+  // Only the primary user can set these — prevents last-writer-wins race.
   if (stepId === "introduction" && user.coupleId) {
-    const ans = answers as Record<string, unknown>;
-    const updates: Record<string, unknown> = { updatedAt: new Date() };
-    if (typeof ans.state_of_residence === "string" && ans.state_of_residence) {
-      updates.stateCode = ans.state_of_residence;
-    }
-    if (typeof ans.wedding_date === "string" && ans.wedding_date) {
-      updates.weddingDate = ans.wedding_date;
-    }
-    if (Object.keys(updates).length > 1) {
-      await db.update(couples).set(updates).where(eq(couples.id, user.coupleId));
+    const [couple] = await db
+      .select({ primaryUserId: couples.primaryUserId })
+      .from(couples)
+      .where(eq(couples.id, user.coupleId))
+      .limit(1);
+
+    if (couple?.primaryUserId === user.id) {
+      const ans = answers as Record<string, unknown>;
+      const updates: Record<string, unknown> = { updatedAt: new Date() };
+      if (typeof ans.state_of_residence === "string" && ans.state_of_residence) {
+        updates.stateCode = ans.state_of_residence;
+      }
+      if (typeof ans.wedding_date === "string" && ans.wedding_date) {
+        updates.weddingDate = ans.wedding_date;
+      }
+      if (Object.keys(updates).length > 1) {
+        await db.update(couples).set(updates).where(eq(couples.id, user.coupleId));
+      }
     }
   }
 

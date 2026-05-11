@@ -18,12 +18,12 @@ export const FL_CONFIG: StateLegalConfig = {
   execution: {
     writingRequired: true,
     bothSignatures: true,
-    notarization: "required",
+    notarization: "recommended",
     notarizationType: "standard",
-    witnesses: "required",
+    witnesses: "recommended",
     witnessCount: 2,
     witnessRules:
-      "Two disinterested subscribing witnesses required for real estate and estate provisions under § 732.702. Since virtually all prenups touch these areas, always have 2 witnesses plus a notary.",
+      "Fla. Stat. § 61.079 only requires writing and signatures for prenup validity. However, § 732.702 requires two subscribing witnesses for provisions waiving estate/elective share rights. Since most prenups touch estate matters, two witnesses plus notarization are strongly recommended as best practice.",
     acknowledgmentOptions: null,
     wetInkRequired: false,
   },
@@ -74,11 +74,11 @@ export const FL_CONFIG: StateLegalConfig = {
 
   uniqueRules: [
     {
-      ruleId: "fl-two-witnesses-required",
+      ruleId: "fl-two-witnesses-recommended",
       description:
-        "Two disinterested subscribing witnesses are required for provisions touching real estate and estate matters under § 732.702. Since virtually all prenups address these areas, two witnesses should always be present at signing.",
+        "Fla. Stat. § 61.079 requires only writing and signatures for prenup validity. However, two subscribing witnesses are required under § 732.702 for provisions waiving estate/elective share rights. Since most prenups include estate provisions, two witnesses plus notarization are strongly recommended.",
       platformImpact:
-        "Platform MUST instruct users to have 2 witnesses plus a notary at the signing ceremony. Signing instructions are critical.",
+        "Platform should instruct users to have 2 witnesses plus a notary at the signing ceremony as best practice. Explain this is for estate provision enforceability.",
       severity: "critical",
     },
     {
@@ -130,7 +130,7 @@ export const FL_CONFIG: StateLegalConfig = {
       "Ensure estate/death provisions comply with Probate Code witness requirements.",
     ],
     warnings: [
-      "Two witnesses AND a notary are effectively required for all prenuptial agreements due to real estate and estate provisions.",
+      "Two witnesses and a notary are not required for basic prenup validity but are strongly recommended for estate provision enforceability under § 732.702.",
       "Clerical errors can invalidate the agreement — careful review is essential.",
       "Lifestyle clauses are not enforceable.",
     ],

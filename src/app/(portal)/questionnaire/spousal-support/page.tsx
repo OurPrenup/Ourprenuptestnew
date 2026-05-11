@@ -112,11 +112,9 @@ export default function SpousalSupportPage() {
           <p className="text-white/80 text-sm mb-4">
             This section is available with your prenup package. Complete the free sections first, then unlock the full agreement.
           </p>
-          <Link href="/payment">
-            <Button variant="secondary" size="sm" className="border-white text-white hover:bg-white/10">
+          <Button variant="secondary" size="sm" className="border-white text-white hover:bg-white/10" onClick={() => router.push("/payment")}>
               Unlock Full Agreement &mdash; $599
             </Button>
-          </Link>
         </div>
       )}
 
@@ -140,12 +138,10 @@ export default function SpousalSupportPage() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-4">
-        <Link href="/questionnaire/financial">
-          <Button variant="secondary" size="md">
+        <Button variant="secondary" size="md" onClick={() => router.push("/questionnaire/financial")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-        </Link>
         <Button variant="primary" size="md" onClick={handleNext}>
           Next: Disclosure &amp; Legal
           <ArrowRight className="w-4 h-4 ml-2" />

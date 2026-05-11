@@ -274,7 +274,22 @@ export async function POST(req: Request) {
       partnerDisclosureRow = row ?? null;
     }
 
-    // 6. Assemble the document content
+    // 6. Load resolved conflicts so the document reflects agreed answers
+    const resolvedConflictRows = await db
+      .select({
+        stepId: collaborationConflicts.stepId,
+        questionId: collaborationConflicts.questionId,
+        resolvedAnswer: collaborationConflicts.resolvedAnswer,
+      })
+      .from(collaborationConflicts)
+      .where(
+        and(
+          eq(collaborationConflicts.coupleId, couple.id),
+          sql`${collaborationConflicts.resolvedAnswer} IS NOT NULL`
+        )
+      );
+
+    // 7. Assemble the document content
     const content = assembleDocument({
       stateCode: couple.stateCode as StateCode,
       weddingDate: couple.weddingDate ?? "",
@@ -282,6 +297,11 @@ export async function POST(req: Request) {
       partnerAnswers,
       primaryDisclosure: (primaryDisclosureRow?.data as Record<string, unknown>) ?? null,
       partnerDisclosure: (partnerDisclosureRow?.data as Record<string, unknown>) ?? null,
+      resolvedConflicts: resolvedConflictRows.map((r) => ({
+        stepId: r.stepId,
+        questionId: r.questionId,
+        resolvedAnswer: r.resolvedAnswer,
+      })),
     });
 
     // 7. Render PDFs (dynamic import to keep the module server-only)

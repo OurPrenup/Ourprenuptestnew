@@ -21,12 +21,10 @@ export default function PaymentCancelPage() {
             purchase anytime.
           </p>
           <div className="pt-4">
-            <Link href="/payment">
-              <Button variant="primary" size="md">
+            <Button variant="primary" size="md" onClick={() => window.location.href = "/payment"}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Plans
               </Button>
-            </Link>
           </div>
         </div>
       </Card>

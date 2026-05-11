@@ -95,11 +95,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const { completedSteps: apiSteps } = await res.json();
           if (!cancelled && Array.isArray(apiSteps)) {
-            setCompletedSteps((localSteps) => {
-              // Merge: union of local + API steps (keeps offline progress)
-              const merged = new Set<string>([...localSteps, ...apiSteps]);
-              persistToSession(merged);
-              return merged;
+            setCompletedSteps(() => {
+              // API is the source of truth after hydration.
+              // Local-only steps (added offline) are kept if not in API,
+              // but API removals are respected.
+              const apiSet = new Set<string>(apiSteps);
+              persistToSession(apiSet);
+              return apiSet;
             });
           }
         }

@@ -95,10 +95,10 @@ export function StateProvider({ children }: { children: ReactNode }) {
       selectedState,
       setSelectedState,
 
-      // Legacy
+      // Legacy (values now derived from new engine where possible)
       stateRules: rules,
-      isCommunityProperty: rules?.propertyRegime === "community",
-      spousalSupportWaivable: rules?.spousalSupportWaivable ?? true,
+      isCommunityProperty: validCode ? isCommunityPropertyState(validCode) : false,
+      spousalSupportWaivable: validCode ? !isSpousalSupportDisabled(validCode) : true,
 
       // New
       legalConfig,

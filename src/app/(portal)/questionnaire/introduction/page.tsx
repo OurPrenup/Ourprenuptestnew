@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { introductionQuestions } from "@/lib/questionnaire/introduction";
 import QuestionCard from "@/components/portal/QuestionCard";
 import Button from "@/components/ui/Button";
 import { ArrowRight, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStateContext } from "@/lib/StateContext";
 import { useProgress } from "@/lib/ProgressContext";
@@ -14,6 +13,8 @@ import { useQuestionnaireStep } from "@/lib/hooks/useQuestionnaireStep";
 import SaveIndicator from "@/components/portal/SaveIndicator";
 import QuestionnaireLoading from "@/components/portal/QuestionnaireLoading";
 import { validateStep, type FieldErrors } from "@/lib/validation/questionnaire-schemas";
+import { isStateAvailable } from "@/legal/state-availability";
+import type { StateCode } from "@/legal/types";
 
 export default function IntroductionPage() {
   const { answers, updateAnswer, isLoading, isSaving, saveError, saveNow } =
@@ -40,6 +41,21 @@ export default function IntroductionPage() {
     router.push("/questionnaire/property");
   };
 
+  // Filter unavailable states (LA, SC, unverified) out of the dropdown
+  const filteredQuestions = useMemo(
+    () =>
+      introductionQuestions.map((q) => {
+        if (q.id !== "state_of_residence" || !q.options) return q;
+        return {
+          ...q,
+          options: q.options.filter((opt) =>
+            isStateAvailable(opt.value as StateCode)
+          ),
+        };
+      }),
+    []
+  );
+
   // Sync state selection to context
   useEffect(() => {
     const state = answers.state_of_residence;
@@ -48,12 +64,12 @@ export default function IntroductionPage() {
     }
   }, [answers.state_of_residence, setSelectedState]);
 
-  const allRequiredAnswered = introductionQuestions
+  const allRequiredAnswered = filteredQuestions
     .filter((q) => q.required)
     .every((q) => {
       const val = answers[q.id];
       if (Array.isArray(val)) return val.length > 0;
-      return val && val.trim() !== "";
+      return val !== undefined && val !== null && !Array.isArray(val) && val.trim() !== "";
     });
 
   if (isLoading) return <QuestionnaireLoading />;
@@ -103,7 +119,7 @@ export default function IntroductionPage() {
 
       {/* Questions */}
       <div className="space-y-6">
-        {introductionQuestions.map((q) => (
+        {filteredQuestions.map((q) => (
           <QuestionCard
             key={q.id}
             question={q}
@@ -132,22 +148,25 @@ export default function IntroductionPage() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-4">
-        <Link href="/dashboard">
-          <Button variant="secondary" size="md">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
+        <Button variant="secondary" size="md" onClick={() => router.push("/dashboard")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
         {allRequiredAnswered ? (
           <Button variant="primary" size="md" onClick={handleNext}>
             Next: Property
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button variant="disabled" size="md" disabled>
-            Next: Property
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            <Button variant="disabled" size="md" disabled>
+              Next: Property
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <p className="text-sm text-text-secondary">
+              Please complete all required fields to continue
+            </p>
+          </div>
         )}
       </div>
     </div>

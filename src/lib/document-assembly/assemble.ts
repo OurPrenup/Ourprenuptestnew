@@ -17,6 +17,12 @@ import {
 // Input: raw data from the database
 // ---------------------------------------------------------------------------
 
+export interface ResolvedConflict {
+  stepId: string;
+  questionId: string;
+  resolvedAnswer: unknown;
+}
+
 export interface AssembleInput {
   stateCode: StateCode;
   weddingDate: string; // ISO date string
@@ -32,6 +38,9 @@ export interface AssembleInput {
 
   /** Partner's financial disclosure data */
   partnerDisclosure: Record<string, unknown> | null;
+
+  /** Resolved conflict answers to overlay onto primaryAnswers */
+  resolvedConflicts?: ResolvedConflict[];
 }
 
 // ---------------------------------------------------------------------------
@@ -46,12 +55,28 @@ export function assembleDocument(input: AssembleInput): DocumentContent {
     partnerAnswers,
     primaryDisclosure,
     partnerDisclosure,
+    resolvedConflicts,
   } = input;
 
+  // Merge resolved conflict answers into primary answers so the document
+  // reflects what the couple actually agreed on, not just the primary user's
+  // original answers.
+  const effectiveAnswers: Record<string, Record<string, unknown>> = {};
+  for (const [stepId, questions] of Object.entries(primaryAnswers)) {
+    effectiveAnswers[stepId] = { ...questions };
+  }
+  for (const conflict of resolvedConflicts ?? []) {
+    if (!effectiveAnswers[conflict.stepId]) {
+      effectiveAnswers[conflict.stepId] = {};
+    }
+    effectiveAnswers[conflict.stepId][conflict.questionId] = conflict.resolvedAnswer;
+  }
+
   // 1. Get state-specific legal customization from the engine
-  // "no_waiver" means the parties did NOT waive spousal support — so support IS included
-  const spousalApproach = primaryAnswers["spousal-support"]?.["spousal_support_approach"] as string | undefined;
-  const includesSpousalSupport = spousalApproach !== "waiver";
+  // Only include spousal support if the user explicitly chose a non-waiver approach.
+  // If undefined (step skipped or support disabled in state), default to false.
+  const spousalApproach = effectiveAnswers["spousal-support"]?.["spousal_support_approach"] as string | undefined;
+  const includesSpousalSupport = spousalApproach != null && spousalApproach !== "waiver";
 
   const customization = generateDocumentCustomization(stateCode, {
     includesSpousalSupport,
@@ -60,16 +85,16 @@ export function assembleDocument(input: AssembleInput): DocumentContent {
 
   // 2. Extract party information
   // Party 1: always from their own answers (isOwnAnswers = true)
-  const party1 = extractPartyInfo(primaryAnswers, 1, true);
+  const party1 = extractPartyInfo(effectiveAnswers, 1, true);
 
   // Party 2: use partner's OWN answers if available (isOwnAnswers = true),
   // otherwise fall back to what the primary user said about their partner (isOwnAnswers = false)
   const party2 = partnerAnswers
     ? extractPartyInfo(partnerAnswers, 2, true)
-    : extractPartyInfo(primaryAnswers, 2, false);
+    : extractPartyInfo(effectiveAnswers, 2, false);
 
-  // 3. Extract provisions (use primary answers; conflicts should be resolved by now)
-  const provisions = extractProvisions(primaryAnswers);
+  // 3. Extract provisions using effective answers (with conflict resolutions applied)
+  const provisions = extractProvisions(effectiveAnswers);
 
   // 4. Parse financial disclosures
   const party1Disclosure = extractDisclosure(primaryDisclosure);

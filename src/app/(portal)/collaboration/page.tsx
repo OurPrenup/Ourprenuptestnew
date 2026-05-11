@@ -142,11 +142,9 @@ export default function CollaborationPage() {
               Both partners need to complete the questionnaire first. Once you
               both finish, any differences will appear here for review.
             </p>
-            <Link href="/invite">
-              <Button variant="primary" size="md" className="mt-6">
+            <Button variant="primary" size="md" className="mt-6" onClick={() => window.location.href = "/invite"}>
                 Invite Your Partner
               </Button>
-            </Link>
           </div>
         </Card>
       )}
@@ -163,11 +161,9 @@ export default function CollaborationPage() {
               You and your partner answered everything the same way. No
               conflicts to resolve — you&apos;re ready to generate your prenup.
             </p>
-            <Link href="/documents">
-              <Button variant="primary" size="md" className="mt-6">
+            <Button variant="primary" size="md" className="mt-6" onClick={() => window.location.href = "/documents"}>
                 Go to Documents
               </Button>
-            </Link>
           </div>
         </Card>
       )}
@@ -209,11 +205,9 @@ export default function CollaborationPage() {
                   <p className="text-xs text-green-700 mt-1">
                     You&apos;re ready to generate your prenuptial agreement.
                   </p>
-                  <Link href="/documents">
-                    <Button variant="primary" size="sm" className="mt-3">
+                  <Button variant="primary" size="sm" className="mt-3" onClick={() => window.location.href = "/documents"}>
                       Go to Documents
                     </Button>
-                  </Link>
                 </div>
               </div>
             </div>

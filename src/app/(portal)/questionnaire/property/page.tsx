@@ -128,12 +128,10 @@ export default function PropertyPage() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-4">
-        <Link href="/questionnaire/introduction">
-          <Button variant="secondary" size="md">
+        <Button variant="secondary" size="md" onClick={() => router.push("/questionnaire/introduction")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back: Introduction
           </Button>
-        </Link>
         {allRequiredAnswered ? (
           <Button variant="primary" size="md" onClick={handleNext}>
             Next: Debts

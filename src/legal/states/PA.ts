@@ -25,10 +25,10 @@ export const PA_CONFIG: StateLegalConfig = {
 
   financialDisclosure: {
     strictness: "standard",
-    waiverPermitted: false,
+    waiverPermitted: true,
     specialRequirements: null,
     notes:
-      "Full and fair disclosure required. Waiver of disclosure is not permitted. However, Pennsylvania only requires voluntariness and disclosure — not fairness of terms.",
+      "Full and fair disclosure required, but may be expressly waived in writing per 23 Pa.C.S. § 3106(a)(2)(ii). Confirmed by Lugg v. Lugg (64 A.3d 1109, Pa. Super. 2013). Pennsylvania only requires voluntariness and disclosure (or waiver thereof) — not fairness of terms.",
   },
 
   independentCounsel: {
@@ -107,7 +107,7 @@ export const PA_CONFIG: StateLegalConfig = {
       "Ensure full financial disclosure is completed and recorded.",
     ],
     warnings: [
-      "Despite permissive standards, disclosure must still be provided — waiver of disclosure is not permitted.",
+      "Disclosure can be expressly waived in writing per § 3106(a)(2)(ii), but providing disclosure is still best practice.",
     ],
     marketingNotes: [
       "Best self-service state in the country. Courts treat prenups as business contracts.",

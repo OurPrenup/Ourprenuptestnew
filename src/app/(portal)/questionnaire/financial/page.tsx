@@ -124,12 +124,10 @@ export default function FinancialPage() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-4">
-        <Link href="/questionnaire/debts">
-          <Button variant="secondary" size="md">
+        <Button variant="secondary" size="md" onClick={() => router.push("/questionnaire/debts")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back: Debts
           </Button>
-        </Link>
         {allRequiredAnswered ? (
           <Button variant="primary" size="md" onClick={handleNext}>
             Next: Spousal Support

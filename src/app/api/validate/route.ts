@@ -46,13 +46,23 @@ export async function GET() {
     .where(eq(couples.id, user.coupleId))
     .limit(1);
 
-  if (!couple || !couple.stateCode) {
+  if (!couple) {
     return NextResponse.json({
-      isValid: true,
-      errors: [],
+      isValid: false,
+      errors: [{ field: "couple", severity: "error", message: "No couple record found.", stateSpecific: false }],
       warnings: [],
       infos: [],
-      all: [],
+      all: [{ field: "couple", severity: "error", message: "No couple record found.", stateSpecific: false }],
+    });
+  }
+
+  if (!couple.stateCode) {
+    return NextResponse.json({
+      isValid: false,
+      errors: [{ field: "state", severity: "error", message: "State of residence is required. Please complete the Introduction step.", stateSpecific: false }],
+      warnings: [],
+      infos: [],
+      all: [{ field: "state", severity: "error", message: "State of residence is required. Please complete the Introduction step.", stateSpecific: false }],
     });
   }
 

@@ -14,12 +14,12 @@ export const MO_CONFIG: StateLegalConfig = {
   execution: {
     writingRequired: true,
     bothSignatures: true,
-    notarization: "required",
+    notarization: "recommended",
     notarizationType: "standard",
     witnesses: "recommended",
     witnessCount: 1,
     witnessRules:
-      "Either notarization or at least one subscribing witness is required under RSMo § 451.220. Best practice: both notarize AND have witnesses.",
+      "RSMo § 451.220 requires EITHER acknowledgment (notarization) OR proof by at least one subscribing witness — they are alternatives, not both required. Best practice: do both for maximum enforceability.",
     acknowledgmentOptions: [
       {
         id: "acknowledged",

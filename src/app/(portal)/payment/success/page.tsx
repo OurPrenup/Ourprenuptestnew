@@ -119,11 +119,9 @@ function SuccessContent() {
             contact support and we&apos;ll sort it out.
           </p>
           <div className="pt-4">
-            <Link href="/dashboard">
-              <Button variant="secondary" size="md">
+            <Button variant="secondary" size="md" onClick={() => window.location.href = "/dashboard"}>
                 Go to Dashboard
               </Button>
-            </Link>
           </div>
         </div>
       </Card>
@@ -150,11 +148,9 @@ function SuccessContent() {
             contact support.
           </p>
           <div className="pt-4">
-            <Link href="/dashboard">
-              <Button variant="secondary" size="md">
+            <Button variant="secondary" size="md" onClick={() => window.location.href = "/dashboard"}>
                 Go to Dashboard
               </Button>
-            </Link>
           </div>
         </div>
       </Card>
@@ -178,12 +174,10 @@ function SuccessContent() {
           A receipt has been sent to your email.
         </p>
         <div className="pt-4">
-          <Link href="/dashboard">
-            <Button variant="primary" size="md">
+          <Button variant="primary" size="md" onClick={() => window.location.href = "/dashboard"}>
               Continue to Dashboard
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </Link>
         </div>
       </div>
     </Card>

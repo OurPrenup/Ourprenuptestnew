@@ -33,7 +33,7 @@ export const AR_CONFIG: StateLegalConfig = {
     witnesses: "recommended",
     witnessCount: 2,
     witnessRules:
-      "One of four acknowledgment options under § 9-11-402. Option 4 (two disinterested witnesses) is the recommended default for self-service. Option 3 (notary with specific statements) is the alternative for online notarization.",
+      "Acknowledgment IS required under § 9-11-402, but can be satisfied by one of four methods: (1) formal declaration before an authorized public officer, (2) sworn affirmation by respective attorneys, (3) notary-witnessed signing with attorney consultation statement, (4) two disinterested witnesses. Option 4 is the recommended default for self-service. Neither notarization nor witnesses are independently required — but one form of acknowledgment must be used.",
     acknowledgmentOptions: [
       {
         id: "ar-ack-1",
@@ -146,7 +146,7 @@ export const AR_CONFIG: StateLegalConfig = {
       "Include language affirming agreement is made in contemplation of lasting marriage.",
     ],
     warnings: [
-      "Acknowledgment is required — agreement is invalid without one of the four prescribed methods.",
+      "Acknowledgment IS required per § 9-11-402 — agreement is invalid without one of the four prescribed methods. Neither notarization nor witnesses alone are required, but one form of acknowledgment must be used.",
     ],
     marketingNotes: [
       "Self-service viable with witness-based acknowledgment (option 4).",
